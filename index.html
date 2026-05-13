@@ -1,0 +1,1700 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ConciliaML · v6</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0c0f;--bg2:#111418;--bg3:#191d24;--bg4:#1f242e;
+  --brd:rgba(255,255,255,.07);--brd2:rgba(255,255,255,.04);
+  --txt:#e8eaf0;--txt2:#9aa0b4;--txt3:#5a6278;
+  --yl:#f5c842;--ylb:rgba(245,200,66,.08);
+  --gn:#2dd4a0;--gnb:rgba(45,212,160,.08);
+  --rd:#f05a5a;--rdb:rgba(240,90,90,.08);
+  --bl:#5b9cf6;--blb:rgba(91,156,246,.08);
+  --or:#fb8c00;--orb:rgba(251,140,0,.08);
+  --pu:#a78bfa;--pub:rgba(167,139,250,.08);
+  --r:6px;--r2:10px;--r3:14px;
+  --mono:'JetBrains Mono','Fira Code',monospace;
+  --sans:'DM Sans',system-ui,sans-serif;
+}
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--sans);font-size:14px;line-height:1.5}
+#shell{display:flex;height:100vh;overflow:hidden}
+#sidebar{width:224px;min-width:224px;background:var(--bg2);border-right:1px solid var(--brd);display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden}
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+#topbar{height:52px;background:var(--bg2);border-bottom:1px solid var(--brd);display:flex;align-items:center;padding:0 16px;gap:8px;flex-shrink:0}
+#content{flex:1;overflow-y:auto;padding:22px}
+.logo{padding:16px 16px 10px;border-bottom:1px solid var(--brd)}
+.logo-name{font-size:15px;font-weight:800;letter-spacing:-.3px}
+.logo-v{font-size:10px;color:var(--txt3);margin-left:5px;font-family:var(--mono)}
+.sec-lbl{font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:1.2px;padding:10px 14px 4px}
+.ni{display:flex;align-items:center;gap:8px;padding:7px 12px 7px 14px;margin:1px 6px;border-radius:var(--r);cursor:pointer;color:var(--txt2);font-size:12.5px;font-weight:500;transition:.12s;border:none;background:none;width:calc(100% - 12px);text-align:left;white-space:nowrap}
+.ni:hover{background:var(--bg3);color:var(--txt)}
+.ni.on{background:var(--ylb);color:var(--yl);border:1px solid rgba(245,200,66,.15)}
+.ni-i{font-size:14px;width:18px;text-align:center;flex-shrink:0}
+.nb{margin-left:auto;font-size:10px;font-family:var(--mono);background:var(--bg3);padding:1px 5px;border-radius:8px;color:var(--txt3);flex-shrink:0}
+.ni.on .nb{background:rgba(245,200,66,.15);color:var(--yl)}
+.sidebar-accs{padding:6px;border-bottom:1px solid var(--brd)}
+.sacc{display:flex;align-items:center;gap:7px;padding:5px 7px;border-radius:var(--r);cursor:pointer;transition:.12s;font-size:12px}
+.sacc:hover{background:var(--bg3)}.sacc.on{background:var(--blb)}
+.sacc-av{width:24px;height:24px;border-radius:50%;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;flex-shrink:0}
+.panel{display:none}.panel.on{display:block}
+.ph{margin-bottom:16px}.pt{font-size:17px;font-weight:700;letter-spacing:-.2px}.ps{font-size:12px;color:var(--txt3);margin-top:3px}
+.mets{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:18px}
+.mc{background:var(--bg2);border:1px solid var(--brd);border-radius:var(--r2);padding:12px 14px;cursor:default}
+.mc.alert{border-color:rgba(240,90,90,.3)}
+.mc.warn{border-color:rgba(251,140,0,.3)}
+.mc.ok{border-color:rgba(45,212,160,.2)}
+.ml{font-size:10px;color:var(--txt3);font-weight:600;margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px}
+.mv{font-size:19px;font-weight:700;font-family:var(--mono);letter-spacing:-.5px}
+.ms{font-size:10px;color:var(--txt3);margin-top:3px}
+.pos{color:var(--gn)}.neg{color:var(--rd)}.warn-c{color:var(--or)}.pu-c{color:var(--pu)}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--brd);border-radius:var(--r2)}
+table{width:100%;border-collapse:collapse}
+thead{background:var(--bg3)}
+th{padding:9px 11px;text-align:left;font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.6px;white-space:nowrap;border-bottom:1px solid var(--brd);cursor:pointer;user-select:none}
+th:hover{color:var(--txt)}
+td{padding:8px 11px;font-size:12px;border-bottom:1px solid var(--brd2);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr.cl:hover td{background:var(--bg3);cursor:pointer}
+tr.hi td{background:var(--rdb)}
+.r{text-align:right}.mn{font-family:var(--mono);font-size:11px}
+.toolbar{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:12px}
+.srch-w{position:relative;flex:1;min-width:160px;max-width:280px}
+.srch{width:100%;background:var(--bg3);border:1px solid var(--brd);border-radius:var(--r);padding:6px 10px 6px 28px;font-size:12px;color:var(--txt);outline:none}
+.srch:focus{border-color:rgba(245,200,66,.3)}
+.srch-ic{position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--txt3);font-size:11px}
+.fp{background:var(--bg3);border:1px solid var(--brd);border-radius:var(--r);padding:5px 10px;font-size:11px;font-weight:600;color:var(--txt2);cursor:pointer;transition:.12s;white-space:nowrap}
+.fp:hover{color:var(--txt)}.fp.on{background:var(--ylb);color:var(--yl);border-color:rgba(245,200,66,.3)}
+.tc{margin-left:auto;font-size:11px;color:var(--txt3);font-family:var(--mono);white-space:nowrap}
+.tsel{background:var(--bg3);border:1px solid var(--brd);border-radius:var(--r);padding:5px 8px;font-size:11px;color:var(--txt);outline:none;cursor:pointer}
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap}
+.bg{background:var(--gnb);color:var(--gn)}.br{background:var(--rdb);color:var(--rd)}
+.bo{background:var(--orb);color:var(--or)}.bb{background:var(--blb);color:var(--bl)}
+.by{background:var(--ylb);color:var(--yl)}.bk{background:var(--bg3);color:var(--txt3)}
+.bp{background:var(--pub);color:var(--pu)}
+.btn{background:var(--bg3);border:1px solid var(--brd);border-radius:var(--r);padding:7px 13px;font-size:12px;font-weight:600;color:var(--txt);cursor:pointer;transition:.12s;font-family:inherit}
+.btn:hover{border-color:rgba(255,255,255,.14);background:var(--bg4)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-p{background:var(--ylb);border-color:rgba(245,200,66,.3);color:var(--yl)}
+.btn-p:hover{background:rgba(245,200,66,.15);border-color:var(--yl)}
+.btn-d{background:var(--rdb);border-color:rgba(240,90,90,.25);color:var(--rd)}
+.btn-b{background:var(--blb);border-color:rgba(91,156,246,.25);color:var(--bl)}
+.btn-sm{padding:4px 10px;font-size:11px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:11px;font-weight:600;color:var(--txt2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+.inp{width:100%;background:var(--bg3);border:1px solid var(--brd);border-radius:var(--r);padding:7px 11px;font-size:13px;color:var(--txt);outline:none;font-family:inherit}
+.inp:focus{border-color:rgba(245,200,66,.4)}
+.inp-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);z-index:1000}
+.card{background:var(--bg2);border:1px solid var(--brd);border-radius:var(--r3);padding:32px;width:100%;max-width:480px}
+.screen-logo{font-size:22px;font-weight:800;letter-spacing:-.5px;margin-bottom:4px}
+.screen-sub{font-size:13px;color:var(--txt3);margin-bottom:24px}
+.err-msg{background:var(--rdb);border:1px solid rgba(240,90,90,.25);color:var(--rd);border-radius:var(--r);padding:8px 12px;font-size:12px;margin-bottom:12px;display:none}
+#toast-area{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:7px;z-index:9999}
+.toast{background:var(--bg3);border:1px solid var(--brd);border-radius:var(--r2);padding:9px 14px;font-size:12px;box-shadow:0 8px 24px rgba(0,0,0,.5);display:flex;align-items:center;gap:8px;animation:tIn .2s;max-width:340px}
+.toast.ok{border-color:rgba(45,212,160,.3);color:var(--gn)}.toast.err{border-color:rgba(240,90,90,.3);color:var(--rd)}.toast.warn{border-color:rgba(251,140,0,.3);color:var(--or)}
+@keyframes tIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--txt3);flex-shrink:0}
+.s-ok{background:var(--gn)}.s-ing{background:var(--yl);animation:pulse 1s infinite}.s-err{background:var(--rd)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+#ov{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:900;display:none;align-items:center;justify-content:center}
+#ov.on{display:flex}
+#modal{background:var(--bg2);border:1px solid var(--brd);border-radius:var(--r3);padding:22px;width:100%;max-width:600px;max-height:88vh;overflow-y:auto}
+.mh{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.mht{font-size:15px;font-weight:700}
+.div-card{background:var(--bg3);border:1px solid var(--brd);border-radius:var(--r2);padding:12px 14px;margin-bottom:8px}
+.div-card.err{border-left:3px solid var(--rd)}.div-card.warn{border-left:3px solid var(--or)}.div-card.info{border-left:3px solid var(--bl)}.div-card.ok{border-left:3px solid var(--gn)}
+.div-hd{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.div-title{font-weight:600;font-size:12px}
+.div-body{font-size:11px;color:var(--txt2);line-height:1.6}
+.div-val{margin-left:auto;font-family:var(--mono);font-size:12px;font-weight:700}
+.dr{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--brd2);font-size:11px}
+.dr:last-child{border:none}.dk{color:var(--txt3)}.dv{font-weight:500}.dvn{font-family:var(--mono)}
+.sec-title{font-size:12px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
+.log-box{background:var(--bg2);border:1px solid var(--brd);border-radius:var(--r);padding:10px;font-family:var(--mono);font-size:11px;max-height:240px;overflow-y:auto;line-height:1.7}
+.log-box .ok{color:var(--gn)}.log-box .er{color:var(--rd)}.log-box .wa{color:var(--or)}.log-box .in{color:var(--txt3)}
+.prg-wrap{background:var(--bg3);border-radius:var(--r);height:5px;overflow:hidden;margin:6px 0}
+.prg-bar{height:100%;background:var(--yl);transition:width .4s;border-radius:var(--r)}
+.ledger-row{display:grid;grid-template-columns:100px 1fr 80px 90px;gap:8px;padding:5px 8px;border-radius:var(--r);font-size:11px;align-items:center}
+.ledger-row:hover{background:var(--bg3)}
+.ledger-row.credit .lv{color:var(--gn)}.ledger-row.debit .lv{color:var(--rd)}
+.saldo-box{background:var(--bg3);border:1px solid var(--brd);border-radius:var(--r2);padding:14px;margin-bottom:14px}
+.saldo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+.sg{background:var(--bg2);border:1px solid var(--brd);border-radius:var(--r);padding:10px 12px}
+.sg-lbl{font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+.sg-val{font-size:17px;font-weight:700;font-family:var(--mono)}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:4px}
+.empty{text-align:center;padding:40px 20px;color:var(--txt3)}
+.empty-icon{font-size:32px;margin-bottom:10px}
+.empty-title{font-size:14px;font-weight:600;color:var(--txt2);margin-bottom:5px}
+.empty-sub{font-size:11px;line-height:1.7}
+.sync-btn{display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:var(--r);font-size:12px;font-weight:600;cursor:pointer;border:1px solid rgba(245,200,66,.3);background:var(--ylb);color:var(--yl);transition:.15s;font-family:inherit}
+.sync-btn:hover{background:rgba(245,200,66,.15)}.sync-btn:disabled{opacity:.4;cursor:not-allowed}
+.sync-btn.blu{background:var(--blb);border-color:rgba(91,156,246,.3);color:var(--bl)}
+.sync-btn.grn{background:var(--gnb);border-color:rgba(45,212,160,.2);color:var(--gn)}
+.info-strip{background:var(--ylb);border:1px solid rgba(245,200,66,.2);border-radius:var(--r2);padding:10px 14px;font-size:12px;line-height:1.7;margin-bottom:14px}
+.acc-card{background:var(--bg3);border:1px solid var(--brd);border-radius:var(--r2);padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:8px;transition:.12s}
+.acc-card:hover{border-color:rgba(91,156,246,.3)}
+.acc-av{width:36px;height:36px;border-radius:50%;background:var(--blb);color:var(--bl);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0}
+.acc-info{flex:1;min-width:0}
+.acc-nick{font-weight:600;font-size:13px}
+.acc-id{font-size:11px;color:var(--txt3);font-family:var(--mono)}
+.pil{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px}
+.pil-btn{background:var(--bg3);border:1px solid var(--brd);border-radius:var(--r);padding:5px 11px;font-size:11px;font-weight:500;color:var(--txt2);cursor:pointer;font-family:var(--mono);transition:.12s}
+.pil-btn:hover{border-color:rgba(245,200,66,.3);color:var(--yl)}
+.pil-btn.on{background:var(--ylb);border-color:rgba(245,200,66,.4);color:var(--yl);font-weight:700}
+.pil-btn.open{border-style:dashed}
+code{font-family:var(--mono);font-size:11px;background:var(--bg3);padding:2px 6px;border-radius:4px}
+</style>
+</head>
+<body>
+
+<!-- ══ AUTH ══════════════════════════════════════════════════ -->
+<div class="screen" id="auth-screen">
+  <div class="card">
+    <div class="screen-logo">⚡ ConciliaML</div>
+    <div class="screen-sub">v6 · Conciliação financeira completa ML + MP</div>
+    <div class="err-msg" id="auth-err"></div>
+    <div class="field"><label>E-mail</label><input class="inp" id="au-email" type="email" placeholder="admin@local" autocomplete="username"></div>
+    <div class="field"><label>Senha</label><input class="inp" id="au-pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="btn btn-p" style="width:100%;padding:10px" id="btn-login" onclick="doLogin()">Entrar</button>
+  </div>
+</div>
+
+<!-- ══ FIREBASE SETUP ════════════════════════════════════════ -->
+<div class="screen" id="fb-setup" style="display:none">
+  <div class="card" style="max-width:520px">
+    <div class="screen-logo">🔧 Firebase</div>
+    <div class="screen-sub">Crie um projeto gratuito em <a href="https://console.firebase.google.com" target="_blank" style="color:var(--yl)">console.firebase.google.com</a></div>
+    <div class="err-msg" id="fc-err"></div>
+    <div class="inp-2">
+      <div class="field"><label>API Key</label><input class="inp" id="fc-apikey" placeholder="AIzaSy..."></div>
+      <div class="field"><label>Auth Domain</label><input class="inp" id="fc-domain" placeholder="proj.firebaseapp.com"></div>
+    </div>
+    <div class="inp-2">
+      <div class="field"><label>Project ID</label><input class="inp" id="fc-pid" placeholder="meu-projeto"></div>
+      <div class="field"><label>Storage Bucket</label><input class="inp" id="fc-bucket" placeholder="meu-projeto.appspot.com"></div>
+    </div>
+    <div class="inp-2">
+      <div class="field"><label>Messaging Sender ID</label><input class="inp" id="fc-sender" placeholder="123456789"></div>
+      <div class="field"><label>App ID</label><input class="inp" id="fc-appid" placeholder="1:123:web:abc"></div>
+    </div>
+    <button class="btn btn-p" style="width:100%;padding:10px" onclick="saveFirebaseConfig()">Conectar</button>
+  </div>
+</div>
+
+<!-- ══ APP ═══════════════════════════════════════════════════ -->
+<div id="shell" style="display:none">
+  <nav id="sidebar">
+    <div class="logo">
+      <span class="logo-name">⚡ ConciliaML</span><span class="logo-v">v6</span>
+      <div style="font-size:10px;color:var(--txt3);margin-top:3px" id="sb-user"></div>
+    </div>
+    <div class="sidebar-accs" id="sidebar-accs"></div>
+    <button class="btn btn-sm" style="margin:6px 8px;font-size:11px;width:calc(100% - 16px)" onclick="go('sellers',qni('sellers'))">+ Sellers</button>
+    <div class="sec-lbl">Financeiro</div>
+    <button class="ni on" data-p="dashboard" onclick="go('dashboard',this)"><span class="ni-i">📊</span>Dashboard<span class="nb" id="nb-div">–</span></button>
+    <button class="ni" data-p="ledger" onclick="go('ledger',this)"><span class="ni-i">📒</span>Ledger<span class="nb" id="nb-led">–</span></button>
+    <button class="ni" data-p="saldo-mp" onclick="go('saldo-mp',this)"><span class="ni-i">💰</span>Saldo MP<span class="nb" id="nb-saldo">–</span></button>
+    <div class="sec-lbl">Pedidos & Pagamentos</div>
+    <button class="ni" data-p="pedidos" onclick="go('pedidos',this)"><span class="ni-i">🛒</span>Pedidos<span class="nb" id="nb-ord">–</span></button>
+    <button class="ni" data-p="pagamentos" onclick="go('pagamentos',this)"><span class="ni-i">💳</span>Pagamentos<span class="nb" id="nb-pay">–</span></button>
+    <button class="ni" data-p="conciliacao" onclick="go('conciliacao',this)"><span class="ni-i">⚖️</span>Conciliação<span class="nb" id="nb-conc">–</span></button>
+    <div class="sec-lbl">Operacional</div>
+    <button class="ni" data-p="envios" onclick="go('envios',this)"><span class="ni-i">📦</span>Envios<span class="nb" id="nb-ship">–</span></button>
+    <button class="ni" data-p="mediacoes" onclick="go('mediacoes',this)"><span class="ni-i">⚠️</span>Mediações<span class="nb" id="nb-claim">–</span></button>
+    <button class="ni" data-p="reembolsos" onclick="go('reembolsos',this)"><span class="ni-i">↩</span>Reembolsos<span class="nb" id="nb-ref">–</span></button>
+    <button class="ni" data-p="chargebacks" onclick="go('chargebacks',this)"><span class="ni-i">🚨</span>Chargebacks<span class="nb" id="nb-cb">–</span></button>
+    <div class="sec-lbl">Tarifas</div>
+    <button class="ni" data-p="tarifas-ml" onclick="go('tarifas-ml',this)"><span class="ni-i">📋</span>Tarifas ML<span class="nb" id="nb-tar">–</span></button>
+    <button class="ni" data-p="tarifas-mp" onclick="go('tarifas-mp',this)"><span class="ni-i">🏦</span>Tarifas MP<span class="nb" id="nb-mptar">–</span></button>
+    <div class="sec-lbl">Gestão</div>
+    <button class="ni" data-p="produtos" onclick="go('produtos',this)"><span class="ni-i">📦</span>Produtos (CMV)<span class="nb" id="nb-prod">–</span></button>
+    <button class="ni" data-p="divergencias" onclick="go('divergencias',this)"><span class="ni-i">🔍</span>Divergências<span class="nb" id="nb-divp">–</span></button>
+    <div class="sec-lbl">Sistema</div>
+    <button class="ni" data-p="sellers" onclick="go('sellers',this)"><span class="ni-i">👤</span>Sellers<span class="nb" id="nb-acc">0</span></button>
+    <button class="ni" data-p="config" onclick="go('config',this)"><span class="ni-i">⚙️</span>Configurações</button>
+    <div style="margin-top:auto;padding:10px 8px;border-top:1px solid var(--brd)">
+      <button class="btn btn-sm" style="width:100%;font-size:11px" onclick="doLogout()">Sair</button>
+    </div>
+  </nav>
+
+  <div id="main">
+    <div id="topbar">
+      <div id="period-pills" class="pil" style="margin:0;flex-wrap:nowrap;overflow-x:auto;max-width:420px"></div>
+      <div style="flex:1"></div>
+      <div style="display:flex;align-items:center;gap:7px">
+        <span class="sync-dot" id="sync-dot"></span>
+        <span style="font-size:11px;color:var(--txt3)" id="sync-lbl">Pronto</span>
+        <button class="sync-btn" id="btn-sync" onclick="startSync()">⟳ Sincronizar</button>
+        <button class="sync-btn grn" onclick="exportRelatorio()">↓ XLSX</button>
+        <button class="sync-btn blu" onclick="openSyncLog()">📋 Log</button>
+      </div>
+      <div style="width:1px;height:22px;background:var(--brd);margin:0 6px"></div>
+      <div id="uavatar" style="width:28px;height:28px;border-radius:50%;background:var(--ylb);border:1px solid rgba(245,200,66,.3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--yl);cursor:pointer"></div>
+    </div>
+
+    <div id="content">
+
+      <!-- DASHBOARD -->
+      <div class="panel on" id="panel-dashboard">
+        <div class="ph"><div class="pt">Dashboard</div><div class="ps" id="dash-sub">Sincronize para ver os dados</div></div>
+        <div id="dash-body"><div class="empty"><div class="empty-icon">📡</div><div class="empty-title">Nenhum dado</div><div class="empty-sub">Adicione um seller e clique em <b>Sincronizar</b></div></div></div>
+      </div>
+
+      <!-- LEDGER -->
+      <div class="panel" id="panel-ledger">
+        <div class="ph"><div class="pt">Ledger Financeiro</div><div class="ps">Todas as movimentações que afetam seu saldo — créditos e débitos</div></div>
+        <div class="toolbar">
+          <div class="srch-w"><span class="srch-ic">🔍</span><input class="srch" id="srch-led" placeholder="Descrição, ID, tipo..." oninput="renderLedger()"></div>
+          <button class="fp on" onclick="setLF('all',this)">Todos</button>
+          <button class="fp" onclick="setLF('credit',this)">Créditos</button>
+          <button class="fp" onclick="setLF('debit',this)">Débitos</button>
+          <select class="tsel" id="sel-led-tipo" onchange="renderLedger()"><option value="">Todos tipos</option></select>
+          <span class="tc" id="cnt-led">–</span>
+        </div>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th><th>IDs</th><th class="r">Valor</th><th class="r">Saldo acum.</th></tr></thead>
+          <tbody id="tbl-led"></tbody>
+        </table></div>
+      </div>
+
+      <!-- SALDO MP -->
+      <div class="panel" id="panel-saldo-mp">
+        <div class="ph"><div class="pt">Saldo Mercado Pago</div><div class="ps">Disponível · Pendente · Bloqueado · Futuro</div></div>
+        <div id="saldo-body"></div>
+      </div>
+
+      <!-- PEDIDOS -->
+      <div class="panel" id="panel-pedidos">
+        <div class="ph"><div class="pt">Pedidos</div><div class="ps">Todos os eventos de pedido com status de pagamento e envio</div></div>
+        <div class="toolbar">
+          <div class="srch-w"><span class="srch-ic">🔍</span><input class="srch" id="srch-ord" placeholder="ID, comprador, produto..." oninput="renderPedidos()"></div>
+          <button class="fp on" onclick="setOF('all',this)">Todos</button>
+          <button class="fp" onclick="setOF('paid',this)">Pagos</button>
+          <button class="fp" onclick="setOF('cancelled',this)">Cancelados</button>
+          <button class="fp" onclick="setOF('returned',this)">Devolvidos</button>
+          <button class="fp" onclick="setOF('mediation',this)">Mediação</button>
+          <span class="tc" id="cnt-ord">–</span>
+        </div>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>Data</th><th>Pedido</th><th>Pack</th><th>Comprador</th><th>Produto</th><th>Qtd</th><th class="r">Receita</th><th class="r">Comissão</th><th class="r">Frete</th><th class="r">Líquido</th><th>Pgto</th><th>Envio</th><th>Status</th></tr></thead>
+          <tbody id="tbl-ord"></tbody>
+        </table></div>
+      </div>
+
+      <!-- PAGAMENTOS -->
+      <div class="panel" id="panel-pagamentos">
+        <div class="ph"><div class="pt">Pagamentos</div><div class="ps">Status real de cada pagamento: aprovado, pendente, estornado, chargeback</div></div>
+        <div class="toolbar">
+          <div class="srch-w"><span class="srch-ic">🔍</span><input class="srch" id="srch-pay" placeholder="Payment ID, Order ID..." oninput="renderPagamentos()"></div>
+          <button class="fp on" onclick="setPF('all',this)">Todos</button>
+          <button class="fp" onclick="setPF('approved',this)">Aprovados</button>
+          <button class="fp" onclick="setPF('pending',this)">Pendentes</button>
+          <button class="fp" onclick="setPF('refunded',this)">Estornados</button>
+          <button class="fp" onclick="setPF('charged_back',this)">Chargeback</button>
+          <button class="fp" onclick="setPF('rejected',this)">Rejeitados</button>
+          <span class="tc" id="cnt-pay">–</span>
+        </div>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>Data</th><th>Payment ID</th><th>Order ID</th><th>Status</th><th>Método</th><th class="r">Total</th><th class="r">Taxa MP</th><th class="r">Líquido</th><th>Lib. em</th></tr></thead>
+          <tbody id="tbl-pay"></tbody>
+        </table></div>
+      </div>
+
+      <!-- CONCILIAÇÃO -->
+      <div class="panel" id="panel-conciliacao">
+        <div class="ph"><div class="pt">Conciliação ML × MP</div><div class="ps">Taxa esperada vs cobrada — cada divergência identificada</div></div>
+        <div class="toolbar">
+          <div class="srch-w"><span class="srch-ic">🔍</span><input class="srch" id="srch-conc" placeholder="Pedido, produto..." oninput="renderConciliacao()"></div>
+          <button class="fp on" onclick="setCF('all',this)">Todos</button>
+          <button class="fp" onclick="setCF('div',this)">Divergentes</button>
+          <button class="fp" onclick="setCF('ok',this)">Corretos</button>
+          <span class="tc" id="cnt-conc">–</span>
+        </div>
+        <div id="conc-body"></div>
+      </div>
+
+      <!-- ENVIOS -->
+      <div class="panel" id="panel-envios">
+        <div class="ph"><div class="pt">Envios</div><div class="ps">Shipments API — frete, peso, cubagem, divergências logísticas</div></div>
+        <div class="toolbar">
+          <div class="srch-w"><span class="srch-ic">🔍</span><input class="srch" id="srch-ship" placeholder="Shipping ID, Order ID..." oninput="renderEnvios()"></div>
+          <button class="fp on" onclick="setSF('all',this)">Todos</button>
+          <button class="fp" onclick="setSF('div',this)">Dif.Frete</button>
+          <button class="fp" onclick="setSF('lost',this)">Extravio</button>
+          <span class="tc" id="cnt-ship">–</span>
+        </div>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>Shipping ID</th><th>Order ID</th><th>Status</th><th>Tipo</th><th class="r">Frete cobrado</th><th class="r">Frete real</th><th class="r">Diferença</th><th>Logística</th></tr></thead>
+          <tbody id="tbl-ship"></tbody>
+        </table></div>
+      </div>
+
+      <!-- MEDIAÇÕES -->
+      <div class="panel" id="panel-mediacoes">
+        <div class="ph"><div class="pt">Mediações / Claims</div><div class="ps">Reclamações, disputas e resultados — impacto financeiro de cada caso</div></div>
+        <div class="toolbar">
+          <div class="srch-w"><span class="srch-ic">🔍</span><input class="srch" id="srch-claim" placeholder="Claim ID, Order ID..." oninput="renderMediacoes()"></div>
+          <button class="fp on" onclick="setClF('all',this)">Todas</button>
+          <button class="fp" onclick="setClF('open',this)">Abertas</button>
+          <button class="fp" onclick="setClF('closed',this)">Encerradas</button>
+          <span class="tc" id="cnt-claim">–</span>
+        </div>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>Claim ID</th><th>Order ID</th><th>Tipo</th><th>Status</th><th>Resultado</th><th class="r">Impacto R$</th><th>Abertura</th></tr></thead>
+          <tbody id="tbl-claim"></tbody>
+        </table></div>
+      </div>
+
+      <!-- REEMBOLSOS -->
+      <div class="panel" id="panel-reembolsos">
+        <div class="ph"><div class="pt">Reembolsos</div><div class="ps">Estornos totais, parciais e automáticos</div></div>
+        <div id="refund-body"></div>
+      </div>
+
+      <!-- CHARGEBACKS -->
+      <div class="panel" id="panel-chargebacks">
+        <div class="ph"><div class="pt">Chargebacks</div><div class="ps">Contestações de cartão — rastrear recuperação e prejuízo real</div></div>
+        <div id="cb-body"></div>
+      </div>
+
+      <!-- TARIFAS ML -->
+      <div class="panel" id="panel-tarifas-ml">
+        <div class="ph"><div class="pt">Tarifas Mercado Livre</div><div class="ps">Billing API — comissões, frete, ads, fulfillment, parcelamento</div></div>
+        <div class="toolbar">
+          <div class="srch-w"><span class="srch-ic">🔍</span><input class="srch" id="srch-tar" placeholder="Detalhe, order ID..." oninput="renderTarifasML()"></div>
+          <button class="fp on" onclick="setTF('all',this)">Todas</button>
+          <button class="fp" onclick="setTF('comissao',this)">Comissão</button>
+          <button class="fp" onclick="setTF('frete',this)">Frete</button>
+          <button class="fp" onclick="setTF('ads',this)">Ads</button>
+          <button class="fp" onclick="setTF('full',this)">Fulfillment</button>
+          <button class="fp" onclick="setTF('cred',this)">Créditos</button>
+          <span class="tc" id="cnt-tar">–</span>
+        </div>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>Data</th><th>Tipo</th><th>Subtipo</th><th>Order ID</th><th>MLB</th><th class="r">Valor</th></tr></thead>
+          <tbody id="tbl-tar"></tbody>
+        </table></div>
+      </div>
+
+      <!-- TARIFAS MP -->
+      <div class="panel" id="panel-tarifas-mp">
+        <div class="ph"><div class="pt">Tarifas Mercado Pago</div><div class="ps">Antecipações, taxas financeiras e movimentos de conta</div></div>
+        <div id="mp-body"></div>
+      </div>
+
+      <!-- PRODUTOS CMV -->
+      <div class="panel" id="panel-produtos">
+        <div class="ph"><div class="pt">Custo dos Produtos (CMV)</div><div class="ps">Preencha uma vez por MLB — aplicado automaticamente em todos os pedidos</div></div>
+        <div class="toolbar">
+          <div class="srch-w"><span class="srch-ic">🔍</span><input class="srch" id="srch-prod" placeholder="MLB, título..." oninput="renderProdutos()"></div>
+          <span class="tc" id="cnt-prod">–</span>
+        </div>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>MLB</th><th>Título</th><th>Categoria</th><th class="r" style="width:180px">Custo unitário (R$)</th></tr></thead>
+          <tbody id="tbl-prod"></tbody>
+        </table></div>
+      </div>
+
+      <!-- DIVERGÊNCIAS -->
+      <div class="panel" id="panel-divergencias">
+        <div class="ph"><div class="pt">Divergências</div><div class="ps">Todos os problemas identificados — taxa errada, frete divergente, chargeback, venda não recebida</div></div>
+        <div class="toolbar">
+          <button class="fp on" onclick="setDivF('all',this)">Todas</button>
+          <button class="fp" onclick="setDivF('err',this)">Críticas</button>
+          <button class="fp" onclick="setDivF('warn',this)">Avisos</button>
+          <button class="fp" onclick="setDivF('info',this)">Informativas</button>
+          <span class="tc" id="cnt-divp">–</span>
+        </div>
+        <div id="div-list"></div>
+      </div>
+
+      <!-- SELLERS -->
+      <div class="panel" id="panel-sellers">
+        <div class="ph"><div class="pt">Sellers Conectados</div><div class="ps">Multi-conta — cada seller autoriza via OAuth</div></div>
+        <div class="info-strip">
+          <b style="color:var(--yl)">Como conectar:</b> Vá em <b>Configurações</b>, informe App ID e Secret do ML. Depois clique em <b>+ Adicionar Seller</b>, copie o link OAuth, o seller autoriza e cole o código aqui.
+        </div>
+        <button class="btn btn-p" onclick="openAddSeller()" style="margin-bottom:14px">+ Adicionar Seller</button>
+        <div id="sellers-list"></div>
+      </div>
+
+      <!-- CONFIG -->
+      <div class="panel" id="panel-config">
+        <div class="ph"><div class="pt">Configurações</div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div style="background:var(--bg2);border:1px solid var(--brd);border-radius:var(--r2);padding:16px">
+            <div style="font-size:13px;font-weight:700;margin-bottom:12px">🔑 App Mercado Livre</div>
+            <div class="field"><label>App ID (Client ID)</label><input class="inp" id="cfg-appid" placeholder="1234567890123456"></div>
+            <div class="field"><label>Client Secret</label><input class="inp" id="cfg-secret" type="password" placeholder="••••••••"></div>
+            <div class="field"><label>Redirect URI</label><input class="inp" id="cfg-redirect" placeholder="https://..."></div>
+            <button class="btn btn-p btn-sm" onclick="saveMLConfig()">Salvar</button>
+          </div>
+          <div style="background:var(--bg2);border:1px solid var(--brd);border-radius:var(--r2);padding:16px">
+            <div style="font-size:13px;font-weight:700;margin-bottom:12px">🤖 IA (Anthropic)</div>
+            <div class="field"><label>API Key</label><input class="inp" id="cfg-aikey" type="password" placeholder="sk-ant-..."></div>
+            <button class="btn btn-p btn-sm" onclick="saveAIKey()">Salvar</button>
+            <button class="btn btn-sm" style="margin-left:6px" onclick="clearAIKey()">Remover</button>
+            <div style="margin-top:14px;font-size:13px;font-weight:700;margin-bottom:10px">⚠ Zona de risco</div>
+            <button class="btn btn-d btn-sm" onclick="if(confirm('Limpar tudo?')){localStorage.clear();location.reload()}">Limpar dados locais</button>
+            <button class="btn btn-sm" style="margin-left:6px" onclick="resetFBConfig()">Reconfigurar Firebase</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div id="ov"><div id="modal"></div></div>
+<div id="toast-area"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+'use strict';
+// ═══════════════════════════════════════════════════════
+//  ConciliaML v6 — Conciliação financeira completa
+//  Mercado Livre + Mercado Pago — todas as APIs
+// ═══════════════════════════════════════════════════════
+
+// ── Globals ──────────────────────────────────────────────────
+let fbApp=null,fbDB=null,_fbMod=null,SESSION=null;
+const ML_PROXY_URL=null; // Cloud Function para /oauth/token (CORS)
+
+// ── State completo ────────────────────────────────────────────
+const STATE={
+  sellers:{},           // {id: {nick,user_id,access_token,refresh_token,expires_at}}
+  activeSeller:null,
+  periods:[],
+  activePeriod:null,
+  data:{},              // {period: DataSet completo}
+  custos:{},            // {mlb: custo_unit}
+};
+
+// Filtros de telas
+let LF='all',OF='all',PF='all',CF='all',SF='all',ClF='all',TF='all',DivF='all';
+
+// ── Sort state ────────────────────────────────────────────────
+let _ordSort={col:null,asc:true};
+let _paySort={col:null,asc:true};
+
+// ═══════════════════════════════════════════════════════════════
+//  FIREBASE
+// ═══════════════════════════════════════════════════════════════
+async function loadFirebaseSDK(){
+  if(_fbMod)return _fbMod;
+  const SETS=[
+    ['https://cdn.jsdelivr.net/npm/firebase@10.12.5/app/+esm','https://cdn.jsdelivr.net/npm/firebase@10.12.5/firestore/+esm'],
+    ['https://unpkg.com/firebase@10.12.5/app/dist/index.mjs','https://unpkg.com/firebase@10.12.5/firestore/dist/index.mjs'],
+    ['https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js','https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js'],
+  ];
+  for(const[a,b]of SETS){
+    try{const[am,fm]=await Promise.all([import(a),import(b)]);_fbMod={...am,...fm};console.log('Firebase SDK:',a.split('/')[2]);return _fbMod;}
+    catch(e){console.warn('Firebase CDN falhou:',a.split('/')[2]);}
+  }
+  return null;
+}
+async function initFB(cfg){
+  const sdk=await loadFirebaseSDK();if(!sdk)return false;
+  const{initializeApp,getApps,getApp,getFirestore,initializeFirestore,
+        persistentLocalCache,persistentMultipleTabManager,
+        doc,getDoc,setDoc,deleteDoc,collection,getDocs,writeBatch,
+        query,orderBy,where,limit,serverTimestamp}=sdk;
+  try{
+    fbApp=getApps().length>0?getApp():initializeApp(cfg);
+    try{fbDB=typeof initializeFirestore==='function'&&typeof persistentLocalCache==='function'
+      ?initializeFirestore(fbApp,{cache:persistentLocalCache({tabManager:persistentMultipleTabManager?.()})})
+      :getFirestore(fbApp);}
+    catch(e){fbDB=getFirestore(fbApp);}
+    window._fb={doc,getDoc,setDoc,deleteDoc,collection,getDocs,writeBatch,query,orderBy,where,limit,serverTimestamp};
+    return true;
+  }catch(e){console.error('initFB:',e);return false;}
+}
+const DB={
+  async get(p){const{doc:d,getDoc:g}=window._fb;const s=await g(d(fbDB,p));return s.exists()?s.data():null;},
+  async set(p,v){const{doc:d,setDoc:s,serverTimestamp:ts}=window._fb;await s(d(fbDB,p),{...v,_ts:ts()},{merge:true});},
+  async del(p){const{doc:d,deleteDoc:dl}=window._fb;await dl(d(fbDB,p));},
+};
+async function saveChunked(base,col,items,sz=100){
+  const{doc:d,setDoc:s,serverTimestamp:ts}=window._fb;
+  await delSubCol(base+'/'+col);
+  for(let i=0;i<items.length;i+=sz)
+    await s(d(fbDB,base+'/'+col+'/c'+i),{items:items.slice(i,i+sz),idx:Math.floor(i/sz),_ts:ts()});
+}
+async function loadChunked(base,col){
+  const{collection:c,query:q,orderBy:ob,getDocs:g}=window._fb;
+  try{const s=await g(q(c(fbDB,base+'/'+col),ob('idx')));return s.docs.flatMap(d=>d.data().items||[]);}
+  catch(e){return[];}
+}
+async function delSubCol(path){
+  try{const{collection:c,getDocs:g,writeBatch:wb}=window._fb;const s=await g(c(fbDB,path));if(s.empty)return;for(let i=0;i<s.docs.length;i+=400){const b=wb(fbDB);s.docs.slice(i,i+400).forEach(d=>b.delete(d.ref));await b.commit();}}
+  catch(e){}
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  AUTH
+// ═══════════════════════════════════════════════════════════════
+async function hashStr(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');}
+const ME=()=>lsGet('master_email','admin@local');
+async function getMasterHash(){
+  let h=lsGet('master_hash',null);
+  if(!h){
+    const p1=prompt('Crie a senha do admin local (mín. 8 chars):');
+    if(!p1||p1.length<8){alert('Muito curta.');return null;}
+    const p2=prompt('Confirme:');if(p1!==p2){alert('Não coincidem.');return null;}
+    h=await hashStr(p1);lsSet('master_hash',h);lsSet('master_email','admin@local');
+  }
+  return h;
+}
+async function doLogin(){
+  const email=_v('au-email'),pass=_v('au-pass');
+  const errEl=document.getElementById('auth-err');errEl.style.display='none';
+  const btn=document.getElementById('btn-login');
+  if(!email||!pass){errEl.textContent='Preencha e-mail e senha.';errEl.style.display='block';return;}
+  btn.disabled=true;btn.textContent='Entrando...';
+  const reset=()=>{btn.disabled=false;btn.textContent='Entrar';};
+  if(email===ME()){
+    const h=await getMasterHash();if(!h){reset();return;}
+    if(await hashStr(pass)===h){SESSION={uid:'master',email:ME(),role:'admin'};showApp();return;}
+    errEl.textContent='Senha incorreta.';errEl.style.display='block';
+    document.getElementById('au-pass').value='';reset();return;
+  }
+  if(!fbDB){errEl.textContent='Banco não conectado.';errEl.style.display='block';reset();return;}
+  try{
+    const{collection:c,getDocs:g,query:q,where:w}=window._fb;
+    const snap=await g(q(c(fbDB,'usuarios'),w('email','==',email)));
+    if(snap.empty){errEl.textContent='Usuário não encontrado.';errEl.style.display='block';document.getElementById('au-pass').value='';reset();return;}
+    const ud=snap.docs[0].data();
+    if(ud.ativo===false){errEl.textContent='Conta desativada.';errEl.style.display='block';reset();return;}
+    if(!ud.senha_hash||await hashStr(pass)!==ud.senha_hash){errEl.textContent='Senha incorreta.';errEl.style.display='block';document.getElementById('au-pass').value='';reset();return;}
+    SESSION={uid:snap.docs[0].id,email:ud.email,nome:ud.nome,role:ud.role||'user'};showApp();
+  }catch(e){errEl.textContent='Erro: '+e.message;errEl.style.display='block';reset();}
+}
+async function doLogout(){
+  SESSION=null;
+  Object.assign(STATE,{sellers:{},activeSeller:null,periods:[],activePeriod:null,data:{},custos:{}});
+  document.getElementById('shell').style.display='none';
+  document.getElementById('auth-screen').style.display='flex';
+  document.getElementById('au-pass').value='';
+  document.getElementById('btn-login').disabled=false;document.getElementById('btn-login').textContent='Entrar';
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  BOOT + FIREBASE CONFIG
+// ═══════════════════════════════════════════════════════════════
+async function bootApp(){
+  const cfg=lsGet('fbconfig',null);
+  if(cfg){
+    let ok=false;
+    try{ok=await initFB(cfg);}catch(e){}
+    if(!ok){
+      const m=document.createElement('div');
+      m.style.cssText='position:fixed;bottom:12px;left:50%;transform:translateX(-50%);background:var(--orb);border:1px solid rgba(251,140,0,.3);color:var(--or);padding:8px 16px;border-radius:var(--r);font-size:12px;z-index:9999';
+      m.textContent='⚠ Firebase offline — dados locais apenas';
+      document.body.appendChild(m);setTimeout(()=>m.remove(),5000);
+    }
+    document.getElementById('auth-screen').style.display='flex';
+    setTimeout(()=>document.getElementById('au-email')?.focus(),100);
+    return;
+  }
+  document.getElementById('fb-setup').style.display='flex';
+}
+async function saveFirebaseConfig(){
+  const cfg={apiKey:_v('fc-apikey'),authDomain:_v('fc-domain'),projectId:_v('fc-pid'),storageBucket:_v('fc-bucket'),messagingSenderId:_v('fc-sender'),appId:_v('fc-appid')};
+  const err=document.getElementById('fc-err');err.style.display='none';
+  if(!cfg.apiKey||!cfg.projectId){err.textContent='Preencha API Key e Project ID.';err.style.display='block';return;}
+  const ok=await initFB(cfg);
+  if(!ok){err.textContent='Credenciais inválidas.';err.style.display='block';return;}
+  lsSet('fbconfig',cfg);
+  document.getElementById('fb-setup').style.display='none';
+  document.getElementById('auth-screen').style.display='flex';
+}
+function resetFBConfig(){if(!confirm('Reconfigurar Firebase?'))return;lsDel('fbconfig');location.reload();}
+
+// ═══════════════════════════════════════════════════════════════
+//  SHOW APP
+// ═══════════════════════════════════════════════════════════════
+async function showApp(){
+  document.getElementById('auth-screen').style.display='none';
+  document.getElementById('shell').style.display='flex';
+  const nome=SESSION?.nome||SESSION?.email||'';
+  const av=document.getElementById('uavatar');
+  av.textContent=(nome.charAt(0)||'?').toUpperCase();av.title=SESSION?.email||'';
+  document.getElementById('sb-user').textContent=SESSION?.email||'';
+  await loadCustos();
+  await loadSellers();
+  loadMLConfig();loadAIKeyField();
+  renderSidebar();
+  await loadPeriods().catch(()=>{});
+  go('dashboard',qni('dashboard'));
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  ML CONFIG
+// ═══════════════════════════════════════════════════════════════
+const getMLCfg=()=>lsGet('ml_app',{appId:'',secret:'',redirectUri:''});
+function saveMLConfig(){lsSet('ml_app',{appId:_v('cfg-appid'),secret:_v('cfg-secret'),redirectUri:_v('cfg-redirect')});toast('Credenciais ML salvas!');}
+function loadMLConfig(){const c=getMLCfg();['appid','secret','redirect'].forEach((k,i)=>{const el=document.getElementById('cfg-'+k);if(el)el.value=[c.appId,c.secret,c.redirectUri][i]||'';});}
+function getAIKey(){return lsGet('ai_key',null);}
+function saveAIKey(){const k=_v('cfg-aikey');if(!k.startsWith('sk-ant-')){toast('Chave inválida','err');return;}lsSet('ai_key',k);toast('Chave IA salva!');}
+function clearAIKey(){lsDel('ai_key');toast('Chave removida','warn');}
+function loadAIKeyField(){const k=getAIKey();const el=document.getElementById('cfg-aikey');if(el&&k)el.placeholder='sk-ant-... (configurada ✓)';}
+
+// ═══════════════════════════════════════════════════════════════
+//  SELLERS — OAuth + token refresh
+// ═══════════════════════════════════════════════════════════════
+async function loadSellers(){
+  if(!fbDB)return;
+  try{
+    const{collection:c,getDocs:g}=window._fb;
+    const snap=await g(c(fbDB,'sellers'));
+    const loaded={};snap.docs.forEach(d=>{loaded[d.id]=d.data();});
+    STATE.sellers=loaded;
+    if(!STATE.activeSeller){const k=Object.keys(loaded);if(k.length)STATE.activeSeller=k[0];}
+    renderSidebar();
+  }catch(e){console.warn('loadSellers:',e);}
+}
+async function saveSeller(id,data){
+  if(!fbDB)return;
+  await DB.set('sellers/'+id,data);
+  STATE.sellers[id]={...STATE.sellers[id],...data};
+}
+function getOAuthURL(){
+  const{appId,redirectUri}=getMLCfg();if(!appId)return null;
+  return 'https://auth.mercadolivre.com.br/authorization?response_type=code&client_id='+appId+'&redirect_uri='+encodeURIComponent(redirectUri);
+}
+function openAddSeller(){
+  const{appId}=getMLCfg();
+  const modal=document.getElementById('modal');
+  if(!appId){
+    modal.innerHTML='<div class="mh"><div class="mht">Adicionar Seller</div><button class="btn btn-sm" onclick="closeModal()">✕</button></div><div style="color:var(--or);font-size:13px;margin-bottom:14px">⚠ Configure o App ID em <b>Configurações</b> primeiro.</div><button class="btn" onclick="closeModal();go(\'config\',qni(\'config\'))">Ir para Configurações</button>';
+    openModal();return;
+  }
+  const url=getOAuthURL();
+  modal.innerHTML='<div class="mh"><div class="mht">Adicionar Seller</div><button class="btn btn-sm" onclick="closeModal()">✕</button></div>'+
+    '<p style="font-size:12px;color:var(--txt2);margin-bottom:12px;line-height:1.7">1. Abra o link abaixo no navegador do seller<br>2. Após autorizar, copie o código <code>TG-xxx</code> da URL e cole abaixo</p>'+
+    '<div style="background:var(--ylb);border:1px solid rgba(245,200,66,.2);border-radius:var(--r2);padding:12px;margin-bottom:12px">'+
+      '<div style="font-size:11px;font-weight:600;color:var(--yl);margin-bottom:6px">Link OAuth</div>'+
+      '<div style="font-size:10px;font-family:var(--mono);color:var(--txt3);word-break:break-all;background:var(--bg3);padding:6px;border-radius:var(--r)">'+url+'</div>'+
+      '<div style="margin-top:8px;display:flex;gap:6px">'+
+        '<button class="btn btn-p btn-sm" onclick="navigator.clipboard.writeText(\''+url+'\');toast(\'Link copiado!\')">Copiar</button>'+
+        '<button class="btn btn-sm" onclick="window.open(\''+url+'\',\'_blank\')">Abrir</button>'+
+      '</div>'+
+    '</div>'+
+    '<div class="field"><label>Código de autorização</label><input class="inp" id="oauth-code" placeholder="TG-..." style="font-family:var(--mono);font-size:12px"></div>'+
+    '<div class="err-msg" id="oauth-err"></div>'+
+    '<div style="display:flex;gap:8px">'+
+      '<button class="btn btn-p" onclick="exchangeCode()">Conectar</button>'+
+      '<button class="btn" onclick="showTokenFallback()">Colar token manual</button>'+
+      '<button class="btn" onclick="closeModal()">Cancelar</button>'+
+    '</div>';
+  openModal();
+}
+async function exchangeCode(){
+  const code=_v('oauth-code').trim();
+  const err=document.getElementById('oauth-err');err.style.display='none';
+  if(!code){err.textContent='Cole o código de autorização.';err.style.display='block';return;}
+  const{appId,secret,redirectUri}=getMLCfg();
+  if(!appId||!secret){err.textContent='Configure App ID e Secret em Configurações.';err.style.display='block';return;}
+  const btn=event.target;btn.disabled=true;btn.textContent='Conectando...';
+  try{
+    const url=ML_PROXY_URL||'https://api.mercadolibre.com/oauth/token';
+    let resp;
+    try{resp=await fetch(url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({grant_type:'authorization_code',client_id:appId,client_secret:secret,code,redirect_uri:redirectUri})});}
+    catch(corsErr){showTokenFallback();return;}
+    if(!resp.ok){const e=await resp.json().catch(()=>({}));if(resp.status===400||resp.status===401){err.textContent='Código inválido ou expirado.';err.style.display='block';btn.disabled=false;btn.textContent='Conectar';return;}showTokenFallback();return;}
+    const tk=await resp.json();
+    await registerSeller(tk);
+  }catch(e){err.textContent='Erro: '+e.message;err.style.display='block';btn.disabled=false;btn.textContent='Conectar';}
+}
+function showTokenFallback(){
+  document.getElementById('modal').innerHTML=
+    '<div class="mh"><div class="mht">Colar Token Manualmente</div><button class="btn btn-sm" onclick="closeModal()">✕</button></div>'+
+    '<div class="info-strip" style="color:var(--or)">CORS bloqueou a troca automática. Faça via Postman:<br>'+
+    '<code>POST https://api.mercadolibre.com/oauth/token</code><br>'+
+    '<code>grant_type=authorization_code &client_id=X &client_secret=X &code=X &redirect_uri=X</code></div>'+
+    '<div class="field"><label>access_token</label><input class="inp" id="tk-acc" placeholder="APP_USR-..." style="font-family:var(--mono);font-size:11px"></div>'+
+    '<div class="field"><label>refresh_token</label><input class="inp" id="tk-ref" placeholder="TG-..." style="font-family:var(--mono);font-size:11px"></div>'+
+    '<div class="field"><label>user_id</label><input class="inp" id="tk-uid" placeholder="12345678" type="number"></div>'+
+    '<div class="err-msg" id="tk-err"></div>'+
+    '<div style="display:flex;gap:8px"><button class="btn btn-p" onclick="registerManual()">Conectar</button><button class="btn" onclick="closeModal()">Cancelar</button></div>';
+}
+async function registerManual(){
+  const acc=_v('tk-acc'),ref=_v('tk-ref'),uid=_v('tk-uid');
+  const err=document.getElementById('tk-err');err.style.display='none';
+  if(!acc||!uid){err.textContent='Preencha access_token e user_id.';err.style.display='block';return;}
+  await registerSeller({access_token:acc,refresh_token:ref,user_id:parseInt(uid),expires_in:21600});
+}
+async function registerSeller(tk){
+  const info=await mlAPI('/users/me',tk.access_token).catch(()=>null);
+  const id=String(tk.user_id||info?.id||Date.now());
+  const seller={id,nick:info?.nickname||'Seller '+id,email:info?.email||'',user_id:id,
+    access_token:tk.access_token,refresh_token:tk.refresh_token||'',
+    expires_at:Date.now()+(tk.expires_in||21600)*1000,site_id:info?.site_id||'MLB',
+    conectado_em:new Date().toISOString()};
+  await saveSeller(id,seller);
+  STATE.activeSeller=id;
+  closeModal();renderSidebar();renderSellers();
+  toast('Seller "'+seller.nick+'" conectado!');
+  await loadPeriods().catch(()=>{});
+}
+async function refreshToken(sid){
+  const s=STATE.sellers[sid];if(!s?.refresh_token)return false;
+  const{appId,secret}=getMLCfg();
+  try{
+    const r=await fetch('https://api.mercadolibre.com/oauth/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({grant_type:'refresh_token',client_id:appId,client_secret:secret,refresh_token:s.refresh_token})});
+    if(!r.ok)return false;
+    const tk=await r.json();
+    await saveSeller(sid,{access_token:tk.access_token,refresh_token:tk.refresh_token||s.refresh_token,expires_at:Date.now()+(tk.expires_in||21600)*1000});
+    return true;
+  }catch(e){return false;}
+}
+async function getToken(sid){
+  const s=STATE.sellers[sid];if(!s)return null;
+  if(s.expires_at&&Date.now()>s.expires_at-300000)await refreshToken(sid);
+  return STATE.sellers[sid]?.access_token||s.access_token;
+}
+async function removeSeller(id){
+  if(!confirm('Remover seller '+STATE.sellers[id]?.nick+'?'))return;
+  if(fbDB)await DB.del('sellers/'+id);
+  delete STATE.sellers[id];
+  if(STATE.activeSeller===id){const k=Object.keys(STATE.sellers);STATE.activeSeller=k[0]||null;}
+  renderSidebar();renderSellers();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  API CLIENT ML
+// ═══════════════════════════════════════════════════════════════
+async function mlAPI(path,token,params={}){
+  const url=new URL('https://api.mercadolibre.com'+path);
+  Object.entries(params).forEach(([k,v])=>url.searchParams.set(k,v));
+  const r=await fetch(url,{headers:{Authorization:'Bearer '+token}});
+  if(!r.ok){const e=await r.json().catch(()=>({message:r.statusText}));throw new Error('ML '+r.status+': '+(e.message||JSON.stringify(e)));}
+  return r.json();
+}
+async function mlPaged(path,token,params={},max=50000){
+  // Detectar modo de paginação: billing usa from_id, orders/payments usam offset
+  const useOffset=path.includes('/orders/')||path.includes('/payments/')||path.includes('/movements/')||path.includes('/search');
+  const items=[];let fromId=0,offset=0;
+  while(items.length<max){
+    const p=useOffset?{...params,limit:50,offset}:{...params,limit:1000,from_id:fromId,sort_by:'ID',order_by:'ASC'};
+    let data;
+    try{data=await mlAPI(path,token,p);}catch(e){log('wa','Paginação: '+e.message);break;}
+    const res=Array.isArray(data)?data:(data.results||data.elements||data.details||[]);
+    if(!res.length)break;
+    items.push(...res);
+    if(useOffset){const total=data.paging?.total||0;offset+=res.length;if(offset>=total||res.length<50)break;}
+    else{const last=data.last_id;if(!last||res.length<1000)break;fromId=last;}
+    await delay(200);
+  }
+  return items;
+}
+const delay=ms=>new Promise(r=>setTimeout(r,ms));
+
+// ═══════════════════════════════════════════════════════════════
+//  PERIODS
+// ═══════════════════════════════════════════════════════════════
+async function loadPeriods(){
+  if(!STATE.activeSeller)return;
+  const token=await getToken(STATE.activeSeller);if(!token)return;
+  setSS('ing','Carregando períodos...');
+  try{
+    const data=await mlAPI('/billing/integration/monthly/periods',token,{group:'ML',limit:12});
+    const raw=Array.isArray(data)?data:(data.periods||data.results||[]);
+    let periods=raw.map(p=>typeof p==='string'?p:(p.key||p.date_from||'')).filter(p=>p.match(/^\d{4}-\d{2}/));
+    if(!periods.length){
+      const now=new Date();
+      for(let i=0;i<6;i++){const d=new Date(now.getFullYear(),now.getMonth()-i,1);periods.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-01');}
+    }
+    STATE.periods=[...new Set(periods)].sort().reverse();
+    if(!STATE.activePeriod&&STATE.periods.length)STATE.activePeriod=STATE.periods[0];
+    renderPeriodPills();
+    setSS('ok','Períodos OK ('+STATE.periods.length+')');
+  }catch(e){setSS('err','Erro');log('er','Períodos: '+e.message);}
+}
+function renderPeriodPills(){
+  const el=document.getElementById('period-pills');if(!el)return;
+  el.innerHTML=STATE.periods.slice(0,10).map(p=>
+    '<button class="pil-btn'+(p===STATE.activePeriod?' on':'')+'" onclick="selectPeriod(\''+p+'\')">'+fPeriod(p)+'</button>'
+  ).join('');
+}
+async function selectPeriod(key){
+  STATE.activePeriod=key;renderPeriodPills();
+  if(STATE.data[key]){renderAll();return;}
+  if(fbDB&&STATE.activeSeller){
+    setSS('ing','Carregando cache...');
+    const cached=await loadFromFirestore(STATE.activeSeller,key).catch(()=>null);
+    if(cached){STATE.data[key]=cached;setSS('ok','Cache carregado');renderAll();return;}
+    setSS('','');
+  }
+  updBadges(null);renderAll();
+  toast('Período '+fPeriod(key)+' não sincronizado. Clique em ⟳ Sincronizar.','warn');
+}
+function fPeriod(k){if(!k)return'–';const d=new Date(k+'T12:00:00Z');return d.toLocaleDateString('pt-BR',{month:'short',year:'numeric'});}
+
+// ═══════════════════════════════════════════════════════════════
+//  SYNC COMPLETO — todas as APIs
+// ═══════════════════════════════════════════════════════════════
+let _syncing=false;
+const _syncLog=[];
+async function startSync(){
+  if(_syncing){toast('Sincronização em andamento.','warn');return;}
+  if(!STATE.activeSeller){toast('Adicione um seller primeiro.','warn');go('sellers',qni('sellers'));return;}
+  if(!STATE.activePeriod){await loadPeriods();if(!STATE.activePeriod){toast('Sem período disponível.','err');return;}}
+  _syncing=true;_syncLog.length=0;
+  document.getElementById('btn-sync').disabled=true;
+  setSS('ing','Sincronizando...');
+  const sid=STATE.activeSeller,period=STATE.activePeriod;
+  try{
+    const token=await getToken(sid);
+    if(!token)throw new Error('Token inválido — reconecte o seller.');
+    const uid=STATE.sellers[sid]?.user_id||sid;
+
+    // ── 1. Tarifas ML (Billing API) ───────────────────────────
+    log('in','[1/8] Tarifas ML (Billing)...');
+    const tarifasML=await fetchBilling(token,period,'ML');
+    log('ok','Tarifas ML: '+tarifasML.length);
+
+    // ── 2. Tarifas MP (Billing API) ───────────────────────────
+    log('in','[2/8] Tarifas MP (Billing)...');
+    const tarifasMP=await fetchBilling(token,period,'MP');
+    log('ok','Tarifas MP: '+tarifasMP.length);
+
+    // ── 3. Pedidos (Orders API) ───────────────────────────────
+    log('in','[3/8] Pedidos (Orders API)...');
+    const orders=await fetchOrders(token,uid,period);
+    log('ok','Pedidos: '+orders.length);
+
+    // ── 4. Pagamentos detalhados (Payments API) ───────────────
+    log('in','[4/8] Pagamentos (Payments API)...');
+    const payments=await fetchPayments(token,orders);
+    log('ok','Pagamentos: '+payments.length);
+
+    // ── 5. Envios (Shipments API) ─────────────────────────────
+    log('in','[5/8] Envios (Shipments API)...');
+    const shipments=await fetchShipments(token,orders);
+    log('ok','Envios: '+shipments.length);
+
+    // ── 6. Mediações / Claims ─────────────────────────────────
+    log('in','[6/8] Mediações (Claims API)...');
+    const claims=await fetchClaims(token,uid,period);
+    log('ok','Mediações: '+claims.length);
+
+    // ── 7. Saldo Mercado Pago ─────────────────────────────────
+    log('in','[7/8] Saldo e movimentos MP...');
+    const{saldo,movements}=await fetchSaldoMP(token,uid,period);
+    log('ok','Movimentos MP: '+movements.length);
+
+    // ── 8. Conciliação completa ───────────────────────────────
+    log('in','[8/8] Conciliando tudo...');
+    const dataset=buildDataset({tarifasML,tarifasMP,orders,payments,shipments,claims,saldo,movements,period,sid});
+    log('ok','Conciliação: '+dataset.stats.numPedidos+' pedidos | '+dataset.divergencias.length+' divergências');
+
+    STATE.data[period]=dataset;
+
+    // ── Salvar no Firestore ───────────────────────────────────
+    log('in','Salvando no Firestore...');
+    await saveToFirestore(sid,period,dataset);
+    log('ok','Salvo!');
+
+    updBadges(dataset);renderAll();
+    setSS('ok','Sincronizado '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}));
+    toast('Sincronização concluída!');
+  }catch(e){log('er','ERRO: '+e.message);setSS('err','Erro');toast(e.message,'err');}
+  finally{_syncing=false;document.getElementById('btn-sync').disabled=false;}
+}
+
+// ── Billing API ───────────────────────────────────────────────
+async function fetchBilling(token,period,group){
+  try{
+    const path='/billing/integration/periods/key/'+period+'/group/'+group+'/details';
+    return await mlPaged(path,token,{document_type:'BILL'});
+  }catch(e){log('wa','Billing '+group+': '+e.message);return[];}
+}
+
+// ── Orders API ────────────────────────────────────────────────
+async function fetchOrders(token,uid,period){
+  const dFrom=period+'T00:00:00.000-03:00';
+  const dEnd=new Date(period+'T12:00:00');dEnd.setMonth(dEnd.getMonth()+1);
+  const dTo=dEnd.getFullYear()+'-'+String(dEnd.getMonth()+1).padStart(2,'0')+'-01'+'T00:00:00.000-03:00';
+  return mlPaged('/orders/search',token,{
+    seller:uid,
+    'order.date_created.from':dFrom,
+    'order.date_created.to':dTo,
+    sort:'date_asc',
+  },20000);
+}
+
+// ── Payments API — buscar detalhes de cada pagamento ─────────
+async function fetchPayments(token,orders){
+  const payIds=new Set();
+  orders.forEach(o=>(o.payments||[]).forEach(p=>{if(p.id)payIds.add(p.id);}));
+  const payments=[];
+  const ids=[...payIds];
+  // Buscar em lotes de 20 para não sobrecarregar
+  for(let i=0;i<ids.length;i+=20){
+    const batch=ids.slice(i,i+20);
+    const results=await Promise.allSettled(batch.map(id=>mlAPI('/payments/'+id,token)));
+    results.forEach(r=>{if(r.status==='fulfilled')payments.push(r.value);});
+    if(i+20<ids.length)await delay(300);
+  }
+  return payments;
+}
+
+// ── Shipments API ─────────────────────────────────────────────
+async function fetchShipments(token,orders){
+  const shipIds=new Set();
+  orders.forEach(o=>{if(o.shipping?.id)shipIds.add(o.shipping.id);});
+  const ships=[];
+  const ids=[...shipIds];
+  for(let i=0;i<ids.length;i+=20){
+    const batch=ids.slice(i,i+20);
+    const results=await Promise.allSettled(batch.map(id=>mlAPI('/shipments/'+id,token)));
+    results.forEach(r=>{if(r.status==='fulfilled')ships.push(r.value);});
+    if(i+20<ids.length)await delay(300);
+  }
+  return ships;
+}
+
+// ── Claims API ────────────────────────────────────────────────
+async function fetchClaims(token,uid,period){
+  try{
+    return await mlPaged('/claims/search',token,{resource_id:uid,status:'all',limit:50});
+  }catch(e){log('wa','Claims: '+e.message);return[];}
+}
+
+// ── Saldo e movimentos Mercado Pago ──────────────────────────
+async function fetchSaldoMP(token,uid,period){
+  let saldo={available:null,pending:null,blocked:null};
+  let movements=[];
+  try{
+    // Saldo atual
+    const s=await mlAPI('/v1/account/money/search',token,{type:'available',site_id:'MLB'}).catch(()=>null);
+    if(s){saldo.available=toF(s.available);saldo.pending=toF(s.pending);saldo.blocked=toF(s.blocked);}
+    // Movimentos do período
+    const dFrom=period.slice(0,7)+'-01';
+    const dEnd=new Date(period+'T12:00:00');dEnd.setMonth(dEnd.getMonth()+1);
+    const dTo=dEnd.getFullYear()+'-'+String(dEnd.getMonth()+1).padStart(2,'0')+'-01';
+    movements=await mlPaged('/v1/account/money/movements',token,{
+      start_date:dFrom,end_date:dTo,limit:50
+    });
+  }catch(e){log('wa','Saldo MP: '+e.message);}
+  return{saldo,movements};
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  ENGINE DE CONCILIAÇÃO COMPLETO
+// ═══════════════════════════════════════════════════════════════
+const TAXAS={
+  '_default':[0.16,0.22],'Beleza e Cuidado':[0.16,0.19],'Eletrônicos':[0.14,0.19],
+  'Informática':[0.14,0.19],'Celulares':[0.13,0.18],'Eletrodomésticos':[0.12,0.17],
+  'Esportes':[0.16,0.19],'Moda':[0.17,0.22],'Livros':[0.14,0.17],
+  'Ferramentas':[0.14,0.19],'Automotivo':[0.12,0.17],'Casa':[0.14,0.19],
+  'Alimentos':[0.16,0.19],'Saúde':[0.14,0.19],'Games':[0.14,0.19],
+};
+function custoFixo(p){return p<79?0:6;}
+function getTaxa(titulo){
+  const k=Object.keys(TAXAS).find(k=>k!=='_default'&&titulo&&titulo.toLowerCase().includes(k.toLowerCase()))||'_default';
+  return TAXAS[k][0];
+}
+
+function buildDataset({tarifasML,tarifasMP,orders,payments,shipments,claims,saldo,movements,period,sid}){
+  const S=(arr,fn)=>+arr.reduce((s,x)=>s+(fn(x)||0),0).toFixed(2);
+
+  // ── Mapas auxiliares ──────────────────────────────────────
+  const payMap={};payments.forEach(p=>{payMap[p.id]=p;});
+  const shipMap={};shipments.forEach(s=>{shipMap[s.id]=s;});
+  const claimMap={};claims.forEach(c=>{if(c.resource_id)claimMap[c.resource_id]=c;});
+
+  // ── Normalizar tarifas ML ─────────────────────────────────
+  const mlT=tarifasML.map(d=>({
+    num_tarifa:  String(d.detail_id||d.id||''),
+    tipo:        d.detail_type||'',
+    subtipo:     d.detail_sub_type||'',
+    detalhe:     d.description||d.detail_type||'',
+    num_venda:   String(d.order_id||''),
+    num_item:    String(d.item_id||''),
+    pagamento_mp:String(d.payment_id||''),
+    data_tarifa: (d.date||d.date_created||'').slice(0,10),
+    valor:       toF(d.detail_amount),
+    descontado:  d.charged_on_operation===true,
+  }));
+
+  // ── Normalizar tarifas MP ─────────────────────────────────
+  const mpT=tarifasMP.map(d=>({
+    num_tarifa:  String(d.detail_id||d.id||''),
+    tipo:        d.detail_type||'',
+    detalhe:     d.description||d.detail_type||'',
+    data:        (d.date||d.date_created||'').slice(0,10),
+    valor:       toF(d.detail_amount),
+    cobrado_op:  d.charged_on_operation===true,
+  }));
+
+  // ── Normalizar pedidos ────────────────────────────────────
+  const peds=orders.map(o=>{
+    const item=o.order_items?.[0]||{};
+    const payRef=o.payments?.[0]||{};
+    const payFull=payMap[payRef.id]||payRef;
+    const ship=shipMap[o.shipping?.id]||null;
+    const claim=claimMap[String(o.id)]||null;
+
+    // Tarifas deste pedido
+    const myTarifas=mlT.filter(t=>t.num_venda===String(o.id));
+    const totalTarifas=+myTarifas.filter(t=>!t.descontado||!t.tipo.toLowerCase().includes('ship')).reduce((s,t)=>s+(t.valor||0),0).toFixed(2);
+
+    // Comissão, frete, ads separados
+    const isComm=t=>(t.tipo||'').toLowerCase().includes('commission')||(t.detalhe||'').toLowerCase().includes('comissão');
+    const isFrete=t=>(t.tipo||'').toLowerCase().includes('ship')||(t.detalhe||'').toLowerCase().includes('frete');
+    const isAds=t=>(t.tipo||'').toLowerCase().includes('ads')||(t.detalhe||'').toLowerCase().includes('publicidade');
+    const comissao=+myTarifas.filter(isComm).reduce((s,t)=>s+(t.valor||0),0).toFixed(2);
+    const freteVendedor=+myTarifas.filter(isFrete).reduce((s,t)=>s+(t.valor||0),0).toFixed(2);
+    const adsCusto=+myTarifas.filter(isAds).reduce((s,t)=>s+(t.valor||0),0).toFixed(2);
+
+    // Status real do pedido
+    const oStatus=o.status||'';
+    const oStatusDet=o.status_detail||'';
+    const payStatus=payFull.status||payRef.status||'';
+    const isReturn=oStatusDet.includes('return')||oStatusDet.includes('refund')||claims.some(c=>String(c.resource_id)===String(o.id)&&(c.type||'').includes('return'));
+    const isChargeback=payStatus==='charged_back'||claims.some(c=>String(c.resource_id)===String(o.id)&&(c.type||'').includes('chargeback'));
+    const isMediation=oStatus==='in_mediation'||claims.some(c=>String(c.resource_id)===String(o.id)&&c.status==='opened');
+    const corr=isChargeback?'chargeback':isReturn?'devolucao':oStatus==='cancelled'?'cancel':isMediation?'mediacao':payStatus==='approved'?'ok':payStatus==='pending'?'pendente':payStatus==='in_process'?'em_processo':payStatus==='rejected'?'rejeitado':'sem_mp';
+
+    // Frete real vs cobrado (divergência logística)
+    const freteCobrado=item.listing_type_id==='gold_special'?0:(ship?.shipping_items?.[0]?.description?.includes('buyer')?0:Math.abs(freteVendedor));
+    const freteReal=toF(ship?.cost||ship?.base_cost||0);
+    const difFrete=+((freteReal-freteCobrado)).toFixed(2);
+
+    // Custo e lucro
+    const mlb=item.item?.id||'';
+    const custo_unit=STATE.custos[mlb]??null;
+    const qtd=item.quantity||1;
+    const receita=toF(o.total_amount);
+    const liquido=+(receita+totalTarifas).toFixed(2); // tarifas são negativas
+    const cmv=custo_unit!=null?+(custo_unit*qtd).toFixed(2):null;
+    const lucro=cmv!=null?+(liquido-cmv).toFixed(2):null;
+
+    // Conciliação de taxa
+    const taxa=getTaxa(item.item?.title||'');
+    const cf=custoFixo(item.unit_price||0);
+    const tarifaEsp=+(receita*taxa+cf*qtd).toFixed(2);
+    const cobradoML=Math.abs(comissao)||null;
+    const difTaxa=cobradoML!=null?+(Math.abs(cobradoML)-tarifaEsp).toFixed(2):null;
+    const liquidoEsp=+(receita-tarifaEsp).toFixed(2);
+    const liquidoReal=cobradoML!=null?+(receita-Math.abs(cobradoML)).toFixed(2):null;
+    const difLiquido=liquidoReal!=null?+(liquidoReal-liquidoEsp).toFixed(2):null;
+    const concStatus=corr==='ok'&&cobradoML!=null?(Math.abs(difTaxa||0)>1.5?'divergencia':'ok'):corr;
+
+    return{
+      // IDs obrigatórios
+      order_id:String(o.id),pack_id:String(o.pack_id||''),
+      payment_id:String(payRef.id||''),shipping_id:String(o.shipping?.id||''),
+      claim_id:String(claim?.id||''),
+      // Dados do pedido
+      data_venda:o.date_created?.slice(0,10)||'',
+      status:oStatus,status_det:oStatusDet,
+      pay_status:payStatus,
+      corr,
+      // Comprador
+      buyer_id:String(o.buyer?.id||''),buyer_nick:o.buyer?.nickname||o.buyer?.email||'',
+      // Produto
+      mlb,titulo:item.item?.title||'',
+      qtd,preco_unit:toF(item.unit_price),
+      // Financeiro
+      receita,comissao,frete_vendedor:freteVendedor,ads_custo:adsCusto,
+      total_tarifas:totalTarifas,liquido,
+      custo_unit,cmv,lucro,
+      // Conciliação
+      taxa,tarifaEsp,cobradoML,difTaxa,liquidoEsp,liquidoReal,difLiquido,concStatus,
+      // Logística
+      frete_cobrado:freteCobrado,frete_real:freteReal,dif_frete:difFrete,
+      logistic_type:ship?.logistic_type||'',
+      // Flags
+      has_claim:!!claim,is_chargeback:isChargeback,is_return:isReturn,
+      is_mediation:isMediation,
+      // Refs
+      tarifas:myTarifas,
+      payment_data:payFull,
+      ship_data:ship,
+      claim_data:claim,
+    };
+  });
+
+  // ── Ledger financeiro completo ────────────────────────────
+  const ledger=[];
+  let saldoAcum=0;
+  // Créditos de vendas aprovadas
+  peds.filter(p=>p.pay_status==='approved').forEach(p=>{
+    ledger.push({data:p.data_venda,tipo:'credito_venda',desc:'Crédito venda #'+p.order_id.slice(-8),valor:p.receita,order_id:p.order_id,payment_id:p.payment_id,credit:true});
+    if(p.comissao)ledger.push({data:p.data_venda,tipo:'comissao',desc:'Comissão ML #'+p.order_id.slice(-8),valor:p.comissao,order_id:p.order_id,credit:false});
+    if(p.frete_vendedor)ledger.push({data:p.data_venda,tipo:'frete',desc:'Frete #'+p.order_id.slice(-8),valor:p.frete_vendedor,order_id:p.order_id,credit:false});
+    if(p.ads_custo)ledger.push({data:p.data_venda,tipo:'ads',desc:'Publicidade #'+p.order_id.slice(-8),valor:p.ads_custo,order_id:p.order_id,credit:false});
+    if(p.dif_frete&&Math.abs(p.dif_frete)>0.5)ledger.push({data:p.data_venda,tipo:'dif_frete',desc:'Diferença frete #'+p.order_id.slice(-8),valor:p.dif_frete,order_id:p.order_id,credit:p.dif_frete>0});
+  });
+  // Estornos e chargebacks
+  peds.filter(p=>p.is_return||p.is_chargeback).forEach(p=>{
+    const tipo=p.is_chargeback?'chargeback':'estorno';
+    ledger.push({data:p.data_venda,tipo,desc:tipo.charAt(0).toUpperCase()+tipo.slice(1)+' #'+p.order_id.slice(-8),valor:-p.receita,order_id:p.order_id,credit:false});
+  });
+  // Movimentos MP
+  movements.forEach(m=>{
+    ledger.push({data:(m.date_created||'').slice(0,10),tipo:m.type||'movimento_mp',desc:m.reason||m.type||'Movimento MP',valor:toF(m.amount),movement_id:String(m.id||''),credit:toF(m.amount)>0});
+  });
+  // Ordenar por data e calcular saldo acumulado
+  ledger.sort((a,b)=>(a.data||'').localeCompare(b.data||''));
+  ledger.forEach(l=>{saldoAcum=+(saldoAcum+l.valor).toFixed(2);l.saldo_acum=saldoAcum;});
+
+  // ── Reembolsos ────────────────────────────────────────────
+  const reembolsos=[];
+  payments.filter(p=>p.status==='refunded'||p.refunds?.length).forEach(p=>{
+    (p.refunds||[{id:p.id,amount:p.transaction_amount,date_created:p.date_created,status:p.status}]).forEach(r=>{
+      reembolsos.push({refund_id:String(r.id||p.id),payment_id:String(p.id),order_id:String(p.order_id||''),valor:toF(r.amount||p.transaction_amount),data:(r.date_created||p.date_created||'').slice(0,10),tipo:p.status==='charged_back'?'chargeback':'reembolso'});
+    });
+  });
+
+  // ── Chargebacks ───────────────────────────────────────────
+  const chargebacks=payments.filter(p=>p.status==='charged_back').map(p=>({
+    payment_id:String(p.id),order_id:String(p.order_id||''),
+    valor:toF(p.transaction_amount),data:p.date_created?.slice(0,10)||'',
+    status:'charged_back',recuperado:false,
+  }));
+
+  // ── Normalizar envios ─────────────────────────────────────
+  const ships=shipments.map(s=>{
+    const ped=peds.find(p=>p.shipping_id===String(s.id));
+    return{
+      shipping_id:String(s.id),order_id:String(s.order_id||ped?.order_id||''),
+      status:s.status||'',logistic_type:s.logistic_type||'',
+      status_hist:s.status_history||{},
+      frete_cobrado:ped?.frete_cobrado||0,
+      frete_real:toF(s.cost||s.base_cost||0),
+      dif_frete:ped?.dif_frete||0,
+      peso_declarado:s.dimensions?.weight||0,
+      peso_aferido:s.logistic?.measurements?.weight||0,
+      tem_dif_frete:Math.abs(ped?.dif_frete||0)>0.5,
+      extraviado:s.status==='lost'||s.status==='stolen',
+    };
+  });
+
+  // ── Divergências completas ────────────────────────────────
+  const divs=[];
+  // Taxa divergente
+  const divTaxa=peds.filter(p=>p.concStatus==='divergencia');
+  if(divTaxa.length)divs.push({tipo:'TAXA_DIVERGENTE',titulo:'Comissão ML divergente',descricao:divTaxa.length+' pedido(s) com taxa cobrada diferente da tabela. Total da diferença: '+f(S(divTaxa,p=>p.difTaxa||0)),valor:S(divTaxa,p=>p.difTaxa||0),sev:'err',pedidos:divTaxa.map(p=>p.order_id)});
+  // Chargebacks
+  if(chargebacks.length)divs.push({tipo:'CHARGEBACK',titulo:'Chargebacks detectados',descricao:chargebacks.length+' pagamento(s) contestado(s). Prejuízo potencial: '+f(S(chargebacks,c=>c.valor)),valor:-S(chargebacks,c=>c.valor),sev:'err'});
+  // Devoluções sem estorno
+  const devSemEst=peds.filter(p=>p.is_return&&!reembolsos.some(r=>r.order_id===p.order_id));
+  if(devSemEst.length)divs.push({tipo:'DEVOLUCAO_SEM_ESTORNO',titulo:'Devoluções sem estorno registrado',descricao:devSemEst.length+' devolução(ões) sem reembolso correspondente nos pagamentos.',valor:-S(devSemEst,p=>p.receita),sev:'err'});
+  // Mediações abertas
+  const medAberta=claims.filter(c=>c.status==='opened');
+  if(medAberta.length)divs.push({tipo:'MEDIACAO_ABERTA',titulo:'Mediações em aberto',descricao:medAberta.length+' reclamação(ões) ativas. Monitorar resultado.',valor:null,sev:'warn'});
+  // Diferença de frete
+  const difFretes=ships.filter(s=>s.tem_dif_frete&&s.dif_frete>0.5);
+  if(difFretes.length)divs.push({tipo:'DIF_FRETE',titulo:'Diferença de frete cobrada',descricao:difFretes.length+' envio(s) com custo real maior que o cobrado ao comprador. Total: '+f(S(difFretes,s=>s.dif_frete)),valor:-S(difFretes,s=>s.dif_frete),sev:'warn'});
+  // Extravios
+  const extravios=ships.filter(s=>s.extraviado);
+  if(extravios.length)divs.push({tipo:'EXTRAVIO',titulo:'Envios extraviados/roubados',descricao:extravios.length+' envio(s) com status de extravio. Verificar indenização.',valor:null,sev:'err'});
+  // Pagamentos pendentes
+  const pendentes=peds.filter(p=>p.pay_status==='pending'||p.pay_status==='in_process');
+  if(pendentes.length)divs.push({tipo:'PAGAMENTO_PENDENTE',titulo:'Pagamentos pendentes',descricao:pendentes.length+' pedido(s) com pagamento não concluído. Receita não confirmada: '+f(S(pendentes,p=>p.receita)),valor:S(pendentes,p=>p.receita),sev:'warn'});
+  // Pagamentos rejeitados com pedido ativo
+  const rejPedAtivo=peds.filter(p=>p.pay_status==='rejected'&&p.status!=='cancelled');
+  if(rejPedAtivo.length)divs.push({tipo:'PAGO_REJEITADO',titulo:'Pagamentos rejeitados com pedido ativo',descricao:rejPedAtivo.length+' pedido(s) com pagamento rejeitado. Verificar estoque e status.',valor:null,sev:'warn'});
+  // Vendas sem payment_id
+  const semPay=peds.filter(p=>!p.payment_id&&p.status!=='cancelled');
+  if(semPay.length)divs.push({tipo:'SEM_PAYMENT_ID',titulo:'Pedidos sem ID de pagamento',descricao:semPay.length+' pedido(s) sem payment_id. Possível inconsistência.',valor:null,sev:'warn'});
+  // Peso divergente
+  const pesoDif=ships.filter(s=>s.peso_aferido&&s.peso_declarado&&Math.abs(s.peso_aferido-s.peso_declarado)>100);
+  if(pesoDif.length)divs.push({tipo:'PESO_DIVERGENTE',titulo:'Peso divergente nos envios',descricao:pesoDif.length+' envio(s) com diferença entre peso declarado e aferido — pode gerar débito adicional.',valor:null,sev:'warn'});
+  // Créditos (informativo)
+  const creditos=mlT.filter(t=>t.valor>0);
+  if(creditos.length)divs.push({tipo:'CREDITOS',titulo:'Créditos recebidos do ML',descricao:creditos.length+' crédito(s)/estorno(s) de tarifa. Total: '+f(S(creditos,t=>t.valor)),valor:S(creditos,t=>t.valor),sev:'info'});
+
+  // ── Stats ─────────────────────────────────────────────────
+  const receita=S(peds.filter(p=>p.pay_status==='approved'),p=>p.receita);
+  const tML=S(mlT,t=>t.valor);
+  const tMP=S(mpT,t=>t.valor);
+  const tPub=S(mlT.filter(t=>t.tipo.toLowerCase().includes('ads')||t.detalhe.toLowerCase().includes('ads')),t=>t.valor);
+  const tFrete=S(peds,p=>p.frete_vendedor);
+  const tComissao=S(peds,p=>p.comissao);
+  const tChargeback=S(chargebacks,c=>c.valor);
+  const tEstorno=S(reembolsos.filter(r=>r.tipo!=='chargeback'),r=>r.valor);
+  const custos=S(peds.filter(p=>p.cmv!=null),p=>p.cmv);
+  const lucro=S(peds.filter(p=>p.lucro!=null),p=>p.lucro);
+  const prods={};peds.forEach(p=>{if(p.mlb&&p.titulo&&!prods[p.mlb])prods[p.mlb]={mlb:p.mlb,titulo:p.titulo};});
+
+  return{
+    periodo:period,seller_id:sid,
+    stats:{receita,tML,tMP,tPub,tFrete,tComissao,tChargeback,tEstorno,
+      liquidoSemCMV:+(receita+tML+tMP).toFixed(2),
+      custos,lucro,
+      numPedidos:peds.length,numPagamentos:payments.length,numEnvios:ships.length,
+      numClaims:claims.length,numReembolsos:reembolsos.length,numChargebacks:chargebacks.length,
+      numDiv:divs.length,numProd:Object.keys(prods).length,
+      saldo_disponivel:saldo.available,saldo_pendente:saldo.pending,saldo_bloqueado:saldo.blocked,
+    },
+    pedidos:peds,ledger,payments,ships,claims,reembolsos,chargebacks,
+    tarifas_ml:mlT,tarifas_mp:mpT,movements,
+    divergencias:divs,produtos:Object.values(prods),
+    saldo,synced_at:new Date().toISOString(),
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  FIRESTORE SAVE / LOAD
+// ═══════════════════════════════════════════════════════════════
+async function saveToFirestore(sid,period,d){
+  if(!fbDB)return;
+  const base='sellers/'+sid+'/periodos/'+period;
+  const{doc:_d,setDoc:_s,serverTimestamp:ts}=window._fb;
+  await _s(_d(fbDB,base),{periodo:period,seller_id:sid,stats:d.stats,divergencias:d.divergencias,
+    saldo:d.saldo,synced_at:d.synced_at,_v:6,_ts:ts()});
+  await Promise.all([
+    saveChunked(base,'pedidos',d.pedidos,100),
+    saveChunked(base,'ledger',d.ledger,200),
+    saveChunked(base,'payments',d.payments,100),
+    saveChunked(base,'ships',d.ships,200),
+    saveChunked(base,'claims',d.claims,200),
+    saveChunked(base,'reembolsos',d.reembolsos,200),
+    saveChunked(base,'chargebacks',d.chargebacks,200),
+    saveChunked(base,'tarifas_ml',d.tarifas_ml,200),
+    saveChunked(base,'tarifas_mp',d.tarifas_mp,200),
+    saveChunked(base,'movements',d.movements,200),
+  ]);
+}
+async function loadFromFirestore(sid,period){
+  if(!fbDB)return null;
+  const base='sellers/'+sid+'/periodos/'+period;
+  const main=await DB.get(base);if(!main)return null;
+  const[pedidos,ledger,payments,ships,claims,reembolsos,chargebacks,tarifas_ml,tarifas_mp,movements]=await Promise.all([
+    loadChunked(base,'pedidos'),loadChunked(base,'ledger'),loadChunked(base,'payments'),
+    loadChunked(base,'ships'),loadChunked(base,'claims'),loadChunked(base,'reembolsos'),
+    loadChunked(base,'chargebacks'),loadChunked(base,'tarifas_ml'),loadChunked(base,'tarifas_mp'),
+    loadChunked(base,'movements'),
+  ]);
+  return{...main,pedidos,ledger,payments,ships,claims,reembolsos,chargebacks,tarifas_ml,tarifas_mp,movements};
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  CUSTOS
+// ═══════════════════════════════════════════════════════════════
+async function loadCustos(){
+  if(!fbDB)return;
+  try{const{collection:c,getDocs:g}=window._fb;const s=await g(c(fbDB,'custos'));s.docs.forEach(d=>{const dat=d.data();STATE.custos[dat.mlb]=dat.valor;});}catch(e){}
+}
+async function saveCusto(mlb,val){
+  const v=parseFloat(val);if(isNaN(v)||v<0){toast('Valor inválido','err');return;}
+  STATE.custos[mlb]=v;
+  if(fbDB)await DB.set('custos/'+mlb,{mlb,valor:v});
+  Object.values(STATE.data).forEach(d=>{
+    (d.pedidos||[]).forEach(p=>{if(p.mlb===mlb){p.custo_unit=v;p.cmv=+(v*p.qtd).toFixed(2);p.lucro=+(p.liquido-p.cmv).toFixed(2);}});
+  });
+  toast('Custo salvo!');renderProdutos();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  RENDER — todas as telas
+// ═══════════════════════════════════════════════════════════════
+const getD=()=>STATE.data[STATE.activePeriod]||null;
+function renderAll(){
+  const id=document.querySelector('.panel.on')?.id?.replace('panel-','');
+  go(id||'dashboard',qni(id||'dashboard'));
+}
+function updBadges(d){
+  const nb=id=>document.getElementById(id);
+  const set=(id,v)=>{const el=nb(id);if(el)el.textContent=v;};
+  if(!d){['nb-div','nb-led','nb-saldo','nb-ord','nb-pay','nb-conc','nb-ship','nb-claim','nb-ref','nb-cb','nb-tar','nb-mptar','nb-prod','nb-divp'].forEach(id=>set(id,'–'));return;}
+  const s=d.stats||{};
+  set('nb-div',s.numDiv||0);set('nb-led',d.ledger?.length||0);
+  set('nb-saldo',s.saldo_disponivel!=null?f(s.saldo_disponivel).replace('R$','').trim():'–');
+  set('nb-ord',s.numPedidos||0);set('nb-pay',s.numPagamentos||0);
+  set('nb-conc',s.numPedidos||0);set('nb-ship',s.numEnvios||0);
+  set('nb-claim',s.numClaims||0);set('nb-ref',s.numReembolsos||0);
+  set('nb-cb',s.numChargebacks||0);set('nb-tar',d.tarifas_ml?.length||0);
+  set('nb-mptar',d.tarifas_mp?.length||0);set('nb-prod',s.numProd||0);
+  set('nb-divp',s.numDiv||0);set('nb-acc',Object.keys(STATE.sellers).length);
+}
+
+// ── Dashboard ─────────────────────────────────────────────────
+function renderDashboard(){
+  const d=getD(),el=document.getElementById('dash-body');
+  const seller=STATE.sellers[STATE.activeSeller];
+  document.getElementById('dash-sub').textContent=d?fPeriod(STATE.activePeriod)+' · '+(seller?.nick||STATE.activeSeller):'Sincronize para ver os dados';
+  updBadges(d);
+  if(!d){el.innerHTML='<div class="empty"><div class="empty-icon">📡</div><div class="empty-title">Sem dados</div><div class="empty-sub">Clique em <b>⟳ Sincronizar</b></div></div>';return;}
+  const s=d.stats;
+  el.innerHTML=
+    '<div class="mets">'+
+      mc('Receita bruta','pos',f(s.receita),s.numPedidos+' pedidos aprovados')+
+      mc('Comissões ML','neg',f(s.tComissao),'marketplace fee')+
+      mc('Frete (vendedor)','neg',f(s.tFrete),'custo de envio')+
+      mc('Publicidade','neg',f(s.tPub),'Product Ads')+
+      mc('Estornos/CB','neg',f(-(s.tChargeback||0)+(s.tEstorno||0)),'chargebacks + reembolsos')+
+      mc('Tarifas MP','neg',f(s.tMP),'antecipação e taxas')+
+      mc('Líquido s/ CMV',s.liquidoSemCMV>=0?'pos':'neg',f(s.liquidoSemCMV),'receita - todas tarifas')+
+      mc('Lucro estimado',s.lucro>=0?'pos':'neg',f(s.lucro),'após CMV','ok')+
+      mc('Saldo disponível MP','pos',f(s.saldo_disponivel)||'–','conta MP atual')+
+      mc('Saldo pendente','' ,f(s.saldo_pendente)||'–','a receber','warn')+
+      mc('Chargebacks',s.numChargebacks>0?'neg':'',''+s.numChargebacks,'contestações',s.numChargebacks>0?'alert':'')+
+      mc('Divergências',s.numDiv>0?'warn-c':'',''+s.numDiv,'requerem atenção',s.numDiv>0?'warn':'')+
+    '</div>'+
+    (d.divergencias?.length?'<div style="margin-bottom:18px"><div style="font-size:12px;font-weight:700;margin-bottom:8px">⚠ Divergências críticas</div>'+d.divergencias.filter(dv=>dv.sev==='err').slice(0,5).map(dv=>
+      '<div class="div-card err"><div class="div-hd"><span class="badge br">'+dv.tipo+'</span><span class="div-title">'+dv.titulo+'</span>'+(dv.valor!=null?'<span class="div-val neg">'+f(dv.valor)+'</span>':'')+'</div><div class="div-body">'+dv.descricao+'</div></div>'
+    ).join('')+'</div>':'');
+}
+function mc(label,cls,val,sub,border=''){return'<div class="mc'+(border?' '+border:'')+'"><div class="ml">'+label+'</div><div class="mv '+(cls||'')+'">'+val+'</div><div class="ms">'+sub+'</div></div>';}
+
+// ── Ledger ────────────────────────────────────────────────────
+function setLF(v,el){LF=v;document.querySelectorAll('#panel-ledger .fp').forEach(x=>x.classList.remove('on'));el.classList.add('on');renderLedger();}
+function renderLedger(){
+  const d=getD();const tb=document.getElementById('tbl-led');
+  if(!d?.ledger){tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--txt3)">Sem dados</td></tr>';return;}
+  let rows=d.ledger;
+  const q=_v('srch-led').toLowerCase();
+  const tipo=document.getElementById('sel-led-tipo')?.value||'';
+  // Popular select
+  const sel=document.getElementById('sel-led-tipo');
+  if(sel&&sel.options.length<=1){[...new Set(rows.map(r=>r.tipo))].sort().forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=t;sel.appendChild(o);});}
+  if(LF==='credit')rows=rows.filter(r=>r.credit);
+  else if(LF==='debit')rows=rows.filter(r=>!r.credit);
+  if(tipo)rows=rows.filter(r=>r.tipo===tipo);
+  if(q)rows=rows.filter(r=>(r.desc||'').toLowerCase().includes(q)||(r.order_id||'').includes(q)||(r.tipo||'').includes(q));
+  document.getElementById('cnt-led').textContent=rows.length+' | '+f(rows.reduce((s,r)=>+(s+r.valor).toFixed(2),0));
+  tb.innerHTML=rows.slice(0,500).map(r=>'<tr><td style="color:var(--txt3)">'+(r.data||'–')+'</td><td><span class="badge '+(r.credit?'bg':'br')+'">'+r.tipo+'</span></td><td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+r.desc+'</td><td class="mn" style="color:var(--txt3)">'+(r.order_id?.slice(-8)||r.movement_id?.slice(-8)||'–')+'</td><td class="r '+(r.credit?'pos':'neg')+'" style="font-weight:600">'+f(r.valor)+'</td><td class="r mn">'+f(r.saldo_acum)+'</td></tr>').join('')||'<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--txt3)">Nenhum lançamento.</td></tr>';
+}
+
+// ── Saldo MP ──────────────────────────────────────────────────
+function renderSaldoMP(){
+  const d=getD();const el=document.getElementById('saldo-body');
+  if(!d){el.innerHTML='<div class="empty"><div class="empty-icon">💰</div><div class="empty-title">Sem dados</div></div>';return;}
+  const s=d.stats;const mv=d.movements||[];
+  el.innerHTML='<div class="saldo-box">'+
+    '<div style="font-size:12px;font-weight:700;color:var(--txt2)">Saldo Mercado Pago</div>'+
+    '<div class="saldo-grid">'+
+      '<div class="sg"><div class="sg-lbl">Disponível</div><div class="sg-val pos">'+f(s.saldo_disponivel)+'</div></div>'+
+      '<div class="sg"><div class="sg-lbl">Pendente</div><div class="sg-val warn-c">'+f(s.saldo_pendente)+'</div></div>'+
+      '<div class="sg"><div class="sg-lbl">Bloqueado</div><div class="sg-val" style="color:var(--txt2)">'+f(s.saldo_bloqueado)+'</div></div>'+
+    '</div></div>'+
+    '<div class="tbl-wrap"><table>'+
+      '<thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th><th>ID</th><th class="r">Valor</th></tr></thead>'+
+      '<tbody>'+(mv.length?mv.slice(0,300).map(m=>'<tr><td style="color:var(--txt3)">'+(m.date_created||'').slice(0,10)+'</td><td><span class="badge '+(toF(m.amount)>0?'bg':'br')+'">'+((m.type||'mv').slice(0,20))+'</span></td><td style="font-size:11px">'+((m.reason||m.type||'–').slice(0,40))+'</td><td class="mn">'+(String(m.id||'–').slice(-10))+'</td><td class="r '+(toF(m.amount)>0?'pos':'neg')+'" style="font-weight:600">'+f(toF(m.amount))+'</td></tr>').join(''):'<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--txt3)">Nenhum movimento MP carregado.</td></tr>')+
+      '</tbody></table></div>';
+}
+
+// ── Pedidos ───────────────────────────────────────────────────
+let _ordPage=0;
+function setOF(v,el){OF=v;_ordPage=0;document.querySelectorAll('#panel-pedidos .fp').forEach(x=>x.classList.remove('on'));el.classList.add('on');renderPedidos();}
+function renderPedidos(){
+  const d=getD();const tb=document.getElementById('tbl-ord');
+  if(!d?.pedidos){tb.innerHTML='<tr><td colspan="13" style="text-align:center;padding:2rem;color:var(--txt3)">Sem dados</td></tr>';return;}
+  let rows=d.pedidos;
+  const q=_v('srch-ord').toLowerCase();
+  if(OF==='paid')rows=rows.filter(r=>r.pay_status==='approved');
+  else if(OF==='cancelled')rows=rows.filter(r=>r.status==='cancelled');
+  else if(OF==='returned')rows=rows.filter(r=>r.is_return);
+  else if(OF==='mediation')rows=rows.filter(r=>r.is_mediation);
+  if(q)rows=rows.filter(r=>(r.order_id||'').includes(q)||(r.buyer_nick||'').toLowerCase().includes(q)||(r.titulo||'').toLowerCase().includes(q));
+  document.getElementById('cnt-ord').textContent=rows.length+'/'+d.pedidos.length;
+  // Ordenação
+  if(_ordSort.col){rows=[...rows].sort((a,b)=>{const va=a[_ordSort.col]||0,vb=b[_ordSort.col]||0;return _ordSort.asc?(typeof va==='string'?va.localeCompare(vb):va-vb):(typeof vb==='string'?vb.localeCompare(va):vb-va);});}
+  const PG=100;const totPgs=Math.ceil(rows.length/PG);if(_ordPage>=totPgs)_ordPage=0;
+  const sl=rows.slice(_ordPage*PG,(_ordPage+1)*PG);
+  const CM={ok:['bg','Pago'],devolucao:['br','Dev.'],cancel:['bk','Cancel.'],mediacao:['bo','Mediação'],pendente:['bo','Pendente'],em_processo:['bo','Em proc.'],rejeitado:['br','Rejeitado'],chargeback:['br','Chargeback'],sem_mp:['bo','Sem pag.']};
+  let html=sl.map(p=>{const[cb,cl]=CM[p.corr]||['bk',p.corr];return'<tr class="cl'+(p.is_chargeback?' hi':'')+'" onclick="openPedModal(\''+p.order_id+'\')">'+'<td style="color:var(--txt3);white-space:nowrap">'+p.data_venda+'</td>'+'<td class="mn">'+p.order_id.slice(-10)+'</td>'+'<td class="mn" style="color:var(--txt3)">'+((p.pack_id&&p.pack_id!=='undefined')?p.pack_id.slice(-8):'–')+'</td>'+'<td style="max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+p.buyer_nick+'</td>'+'<td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+p.titulo+'">'+p.titulo.slice(0,22)+'</td>'+'<td class="r">'+p.qtd+'</td>'+'<td class="r pos">'+f(p.receita)+'</td>'+'<td class="r neg">'+f(p.comissao)+'</td>'+'<td class="r neg">'+f(p.frete_vendedor)+'</td>'+'<td class="r '+(p.liquido>=0?'pos':'neg')+'">'+f(p.liquido)+'</td>'+'<td><span class="badge '+statusPayBadge(p.pay_status)+'">'+p.pay_status+'</span></td>'+'<td><span class="badge '+(p.shipping_id?'bb':'bk')+'">'+((p.logistic_type||p.shipping_id)?'✓':'–')+'</span></td>'+'<td><span class="badge '+cb+'">'+cl+'</span></td>'+'</tr>';}).join('');
+  if(totPgs>1)html+='<tr><td colspan="13" style="padding:8px;text-align:center;background:var(--bg2)"><div style="display:flex;align-items:center;justify-content:center;gap:8px;font-size:11px"><button class="btn btn-sm" onclick="_ordPage=Math.max(0,_ordPage-1);renderPedidos()" '+((_ordPage===0)?'disabled':'')+'>‹</button><span style="color:var(--txt3)">Pág '+(_ordPage+1)+'/'+totPgs+' · '+rows.length+'</span><button class="btn btn-sm" onclick="_ordPage=Math.min('+(totPgs-1)+',_ordPage+1);renderPedidos()" '+((_ordPage>=totPgs-1)?'disabled':'')+'>›</button></div></td></tr>';
+  tb.innerHTML=html||'<tr><td colspan="13" style="text-align:center;padding:2rem;color:var(--txt3)">Nenhum pedido.</td></tr>';
+}
+function statusPayBadge(s){return s==='approved'?'bg':s==='refunded'||s==='charged_back'?'br':s==='pending'||s==='in_process'?'bo':'bk';}
+
+function openPedModal(oid){
+  const d=getD();if(!d)return;
+  const p=d.pedidos?.find(x=>x.order_id===oid);if(!p)return;
+  const modal=document.getElementById('modal');
+  modal.innerHTML='<div class="mh"><div class="mht">Pedido #'+p.order_id.slice(-10)+'</div><button class="btn btn-sm" onclick="closeModal()">✕</button></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">'+
+      '<div>'+secTitle('Pedido')+dr('Order ID',p.order_id)+dr('Pack ID',p.pack_id||'–')+dr('Data',p.data_venda)+dr('Status',p.status)+dr('Status detalhe',p.status_det||'–')+dr('Comprador',p.buyer_nick)+dr('Produto',p.titulo.slice(0,30))+dr('MLB',p.mlb)+dr('Qtd',p.qtd)+dr('Preço unit.',f(p.preco_unit))+'</div>'+
+      '<div>'+secTitle('Financeiro')+dr('Receita',f(p.receita))+dr('Comissão',f(p.comissao))+dr('Frete vendedor',f(p.frete_vendedor))+dr('Ads',f(p.ads_custo))+dr('Total tarifas',f(p.total_tarifas))+dr('Líquido',f(p.liquido))+dr('CMV',p.cmv!=null?f(p.cmv):'não cadastrado')+dr('Lucro',p.lucro!=null?f(p.lucro):'–')+'<div style="margin-top:8px;display:flex;gap:6px;align-items:center"><input class="inp" type="number" id="ped-custo-'+p.mlb+'" value="'+(STATE.custos[p.mlb]||'')+'" placeholder="Custo unit R$" style="font-size:11px;padding:4px 8px"><button class="btn btn-p btn-sm" onclick="saveCusto(\''+p.mlb+'\',document.getElementById(\'ped-custo-'+p.mlb+'\').value).then(()=>closeModal())">✓</button></div>'+
+      '</div>'+
+      '<div>'+secTitle('Conciliação')+dr('Taxa esperada',f(p.tarifaEsp))+dr('Cobrado ML',p.cobradoML!=null?f(p.cobradoML):'–')+dr('Dif. taxa',p.difTaxa!=null?(p.difTaxa>0?'+':'')+f(p.difTaxa):'–')+dr('Líq. esperado',f(p.liquidoEsp))+dr('Líq. real',p.liquidoReal!=null?f(p.liquidoReal):'–')+dr('Dif. líquido',p.difLiquido!=null?(p.difLiquido>=0?'+':'')+f(p.difLiquido):'–')+secTitle('IDs')+dr('Payment ID',p.payment_id||'–')+dr('Shipping ID',p.shipping_id||'–')+dr('Claim ID',p.claim_id||'–')+(p.is_chargeback?'<div style="margin-top:8px"><span class="badge br">🚨 CHARGEBACK</span></div>':'')+(p.is_mediation?'<div style="margin-top:4px"><span class="badge bo">⚠ MEDIAÇÃO</span></div>':'')+'</div>'+
+    '</div>'+
+    (p.tarifas?.length?'<div style="margin-top:14px">'+secTitle('Tarifas deste pedido ('+p.tarifas.length+')')+p.tarifas.map(t=>'<div class="dr"><div class="dk">'+t.subtipo+' · '+t.detalhe.slice(0,30)+'</div><div class="dv dvn '+(t.valor<0?'neg':'pos')+'">'+f(t.valor)+'</div></div>').join('')+'</div>':'');
+  openModal();
+}
+
+// ── Pagamentos ────────────────────────────────────────────────
+function setPF(v,el){PF=v;document.querySelectorAll('#panel-pagamentos .fp').forEach(x=>x.classList.remove('on'));el.classList.add('on');renderPagamentos();}
+function renderPagamentos(){
+  const d=getD();const tb=document.getElementById('tbl-pay');
+  if(!d?.payments){tb.innerHTML='<tr><td colspan="9" style="text-align:center;padding:2rem;color:var(--txt3)">Sem dados</td></tr>';return;}
+  let rows=d.payments;
+  const q=_v('srch-pay').toLowerCase();
+  if(PF!=='all')rows=rows.filter(r=>r.status===PF);
+  if(q)rows=rows.filter(r=>String(r.id).includes(q)||String(r.order_id||'').includes(q));
+  document.getElementById('cnt-pay').textContent=rows.length+'/'+d.payments.length;
+  tb.innerHTML=rows.slice(0,300).map(p=>'<tr><td style="color:var(--txt3)">'+(p.date_created||'').slice(0,10)+'</td><td class="mn">'+String(p.id).slice(-12)+'</td><td class="mn">'+String(p.order_id||'–').slice(-10)+'</td><td><span class="badge '+statusPayBadge(p.status)+'">'+p.status+'</span></td><td style="font-size:11px">'+(p.payment_method_id||p.payment_type_id||'–')+'</td><td class="r pos">'+f(toF(p.transaction_amount))+'</td><td class="r neg">'+f(toF(p.marketplace_fee))+'</td><td class="r '+(toF(p.net_received_amount)>=0?'pos':'neg')+'">'+f(toF(p.net_received_amount))+'</td><td style="font-size:10px;color:var(--txt3)">'+(p.money_release_date?.slice(0,10)||'–')+'</td></tr>').join('')||'<tr><td colspan="9" style="text-align:center;padding:2rem;color:var(--txt3)">Nenhum pagamento.</td></tr>';
+}
+
+// ── Conciliação ───────────────────────────────────────────────
+function setCF(v,el){CF=v;document.querySelectorAll('#panel-conciliacao .fp').forEach(x=>x.classList.remove('on'));el.classList.add('on');renderConciliacao();}
+function renderConciliacao(){
+  const d=getD();const el=document.getElementById('conc-body');
+  if(!d?.pedidos){el.innerHTML='<div class="empty"><div class="empty-icon">⚖️</div><div class="empty-title">Sem dados</div></div>';return;}
+  const q=_v('srch-conc').toLowerCase();
+  let rows=d.pedidos;
+  if(CF==='div')rows=rows.filter(r=>r.concStatus==='divergencia');
+  else if(CF==='ok')rows=rows.filter(r=>r.concStatus==='ok');
+  if(q)rows=rows.filter(r=>(r.order_id||'').includes(q)||(r.titulo||'').toLowerCase().includes(q));
+  const nDiv=rows.filter(r=>r.concStatus==='divergencia').length;
+  document.getElementById('cnt-conc').textContent=rows.length+'/'+d.pedidos.length+' | '+nDiv+' divergentes';
+  const totalDif=rows.reduce((s,r)=>+(s+(r.difTaxa||0)).toFixed(2),0);
+  el.innerHTML='<div class="mets" style="margin-bottom:12px">'+
+    mc('Pedidos conciliados','pos',''+rows.filter(r=>r.concStatus==='ok').length,'taxa correta')+
+    mc('Divergências',nDiv>0?'neg':'',''+nDiv,'taxa incorreta',''+( nDiv>0?'alert':''))+
+    mc('Total diferença taxa',totalDif>0?'neg':'pos',f(totalDif),'cobrado - esperado')+
+  '</div>'+
+  '<div class="tbl-wrap"><table><thead><tr>'+
+    '<th onclick="sortConc(\'order_id\')">Pedido ⇅</th><th>Produto</th>'+
+    '<th class="r" onclick="sortConc(\'receita\')">Receita ⇅</th>'+
+    '<th class="r">Taxa esp.</th><th class="r">Taxa cob.</th>'+
+    '<th class="r" onclick="sortConc(\'difTaxa\')">Dif. ⇅</th>'+
+    '<th class="r">Líq. esp.</th><th class="r">Líq. real</th><th>Status</th>'+
+  '</tr></thead><tbody>'+
+  rows.slice(0,500).map(p=>'<tr class="cl" onclick="openPedModal(\''+p.order_id+'\')">'+'<td class="mn">'+p.order_id.slice(-10)+'</td>'+'<td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+p.titulo.slice(0,20)+'</td>'+'<td class="r">'+f(p.receita)+'</td>'+'<td class="r mn">'+f(p.tarifaEsp)+'</td>'+'<td class="r mn">'+(p.cobradoML!=null?f(Math.abs(p.cobradoML)):'–')+'</td>'+'<td class="r mn '+(p.difTaxa!=null&&p.difTaxa>0.5?'neg':p.difTaxa!=null&&p.difTaxa<-0.5?'pos':'')+'">'+(p.difTaxa!=null?(p.difTaxa>0?'+':'')+f(p.difTaxa):'–')+'</td>'+'<td class="r mn">'+f(p.liquidoEsp)+'</td>'+'<td class="r mn">'+(p.liquidoReal!=null?f(p.liquidoReal):'–')+'</td>'+'<td><span class="badge '+(p.concStatus==='ok'?'bg':p.concStatus==='divergencia'?'br':'bo')+'">'+p.concStatus+'</span></td>'+'</tr>').join('')+
+  '</tbody></table></div>';
+}
+let _concSort={col:null,asc:true};
+function sortConc(col){_concSort=_concSort.col===col?{col,asc:!_concSort.asc}:{col,asc:true};renderConciliacao();}
+
+// ── Envios ────────────────────────────────────────────────────
+function setSF(v,el){SF=v;document.querySelectorAll('#panel-envios .fp').forEach(x=>x.classList.remove('on'));el.classList.add('on');renderEnvios();}
+function renderEnvios(){
+  const d=getD();const tb=document.getElementById('tbl-ship');
+  if(!d?.ships){tb.innerHTML='<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--txt3)">Sem dados</td></tr>';return;}
+  let rows=d.ships;
+  const q=_v('srch-ship').toLowerCase();
+  if(SF==='div')rows=rows.filter(r=>r.tem_dif_frete);
+  else if(SF==='lost')rows=rows.filter(r=>r.extraviado);
+  if(q)rows=rows.filter(r=>String(r.shipping_id).includes(q)||String(r.order_id).includes(q));
+  document.getElementById('cnt-ship').textContent=rows.length+'/'+d.ships.length;
+  tb.innerHTML=rows.slice(0,300).map(s=>'<tr class="cl'+(s.extraviado?' hi':'')+'">'+'<td class="mn">'+String(s.shipping_id).slice(-10)+'</td>'+'<td class="mn">'+String(s.order_id).slice(-10)+'</td>'+'<td><span class="badge '+(s.status==='delivered'?'bg':s.status==='lost'?'br':'bo')+'">'+s.status+'</span></td>'+'<td style="font-size:11px">'+s.logistic_type+'</td>'+'<td class="r">'+f(s.frete_cobrado)+'</td>'+'<td class="r">'+f(s.frete_real)+'</td>'+'<td class="r '+(s.dif_frete>0.5?'neg':s.dif_frete<-0.5?'pos':'')+'">'+( Math.abs(s.dif_frete)>0.01?(s.dif_frete>0?'+':'')+f(s.dif_frete):'OK')+'</td>'+'<td>'+s.logistic_type+'</td>'+'</tr>').join('')||'<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--txt3)">Nenhum envio.</td></tr>';
+}
+
+// ── Mediações ─────────────────────────────────────────────────
+function setClF(v,el){ClF=v;document.querySelectorAll('#panel-mediacoes .fp').forEach(x=>x.classList.remove('on'));el.classList.add('on');renderMediacoes();}
+function renderMediacoes(){
+  const d=getD();const tb=document.getElementById('tbl-claim');
+  if(!d?.claims){tb.innerHTML='<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--txt3)">Sem dados</td></tr>';return;}
+  let rows=d.claims;
+  const q=_v('srch-claim').toLowerCase();
+  if(ClF==='open')rows=rows.filter(r=>r.status==='opened');
+  else if(ClF==='closed')rows=rows.filter(r=>r.status==='closed');
+  if(q)rows=rows.filter(r=>String(r.id).includes(q)||String(r.resource_id||'').includes(q));
+  document.getElementById('cnt-claim').textContent=rows.length;
+  tb.innerHTML=rows.slice(0,200).map(c=>'<tr class="cl '+(c.status==='opened'?' hi':'')+'">'+'<td class="mn">'+String(c.id||'–').slice(-10)+'</td>'+'<td class="mn">'+String(c.resource_id||'–').slice(-10)+'</td>'+'<td style="font-size:11px">'+( c.type||'–')+'</td>'+'<td><span class="badge '+(c.status==='closed'?'bk':'br')+'">'+c.status+'</span></td>'+'<td><span class="badge '+(c.resolution?.type==='seller'?'bg':c.resolution?.type?'br':'bk')+'">'+( c.resolution?.type||'pendente')+'</span></td>'+'<td class="r '+(c.resolution?.amount_seller_compensation?'pos':'')+'">'+( c.resolution?.amount_seller_compensation?f(c.resolution.amount_seller_compensation):'–')+'</td>'+'<td style="color:var(--txt3);font-size:11px">'+(c.date_created||'').slice(0,10)+'</td>'+'</tr>').join('')||'<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--txt3)">Nenhuma mediação.</td></tr>';
+}
+
+// ── Reembolsos ────────────────────────────────────────────────
+function renderReembolsos(){
+  const d=getD();const el=document.getElementById('refund-body');
+  if(!d?.reembolsos||!d.reembolsos.length){el.innerHTML='<div class="empty"><div class="empty-icon">↩</div><div class="empty-title">Sem reembolsos</div></div>';return;}
+  const total=d.reembolsos.reduce((s,r)=>+(s+r.valor).toFixed(2),0);
+  el.innerHTML='<div class="mets"><div class="mc"><div class="ml">Total reembolsado</div><div class="mv neg">'+f(total)+'</div><div class="ms">'+d.reembolsos.length+' reembolsos</div></div></div>'+
+    '<div class="tbl-wrap"><table><thead><tr><th>Data</th><th>Refund ID</th><th>Payment ID</th><th>Order ID</th><th>Tipo</th><th class="r">Valor</th></tr></thead><tbody>'+
+    d.reembolsos.map(r=>'<tr><td style="color:var(--txt3)">'+r.data+'</td><td class="mn">'+r.refund_id.slice(-10)+'</td><td class="mn">'+r.payment_id.slice(-10)+'</td><td class="mn">'+r.order_id.slice(-10)+'</td><td><span class="badge '+(r.tipo==='chargeback'?'br':'bo')+'">'+r.tipo+'</span></td><td class="r neg">'+f(r.valor)+'</td></tr>').join('')+
+    '</tbody></table></div>';
+}
+
+// ── Chargebacks ───────────────────────────────────────────────
+function renderChargebacks(){
+  const d=getD();const el=document.getElementById('cb-body');
+  if(!d?.chargebacks||!d.chargebacks.length){el.innerHTML='<div class="empty"><div class="empty-icon">🚨</div><div class="empty-title">Nenhum chargeback</div><div class="empty-sub">Boa notícia!</div></div>';return;}
+  const total=d.chargebacks.reduce((s,c)=>+(s+c.valor).toFixed(2),0);
+  el.innerHTML='<div class="mets"><div class="mc alert"><div class="ml">Total chargebacks</div><div class="mv neg">'+f(-total)+'</div><div class="ms">'+d.chargebacks.length+' contestações</div></div></div>'+
+    '<div style="background:var(--rdb);border:1px solid rgba(240,90,90,.2);border-radius:var(--r2);padding:12px 14px;margin-bottom:14px;font-size:12px;color:var(--rd)">⚠ Chargebacks são perdas financeiras reais. Abra contestação no ML para cada caso dentro do prazo.</div>'+
+    '<div class="tbl-wrap"><table><thead><tr><th>Data</th><th>Payment ID</th><th>Order ID</th><th>Status</th><th class="r">Valor</th><th>Recuperado</th></tr></thead><tbody>'+
+    d.chargebacks.map(c=>'<tr class="hi"><td style="color:var(--txt3)">'+c.data+'</td><td class="mn">'+c.payment_id.slice(-12)+'</td><td class="mn">'+c.order_id.slice(-10)+'</td><td><span class="badge br">'+c.status+'</span></td><td class="r neg">'+f(-c.valor)+'</td><td><span class="badge '+(c.recuperado?'bg':'bk')+'">'+(c.recuperado?'Sim':'Não')+'</span></td></tr>').join('')+
+    '</tbody></table></div>';
+}
+
+// ── Tarifas ML ────────────────────────────────────────────────
+function setTF(v,el){TF=v;document.querySelectorAll('#panel-tarifas-ml .fp').forEach(x=>x.classList.remove('on'));el.classList.add('on');renderTarifasML();}
+function renderTarifasML(){
+  const d=getD();const tb=document.getElementById('tbl-tar');
+  if(!d?.tarifas_ml){tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--txt3)">Sem dados</td></tr>';return;}
+  let rows=d.tarifas_ml;
+  const q=_v('srch-tar').toLowerCase();
+  const di=document.getElementById('tar-dt-ini')?.value,df=document.getElementById('tar-dt-fim')?.value;
+  if(TF==='comissao')rows=rows.filter(r=>r.tipo.toLowerCase().includes('commission')||r.detalhe.toLowerCase().includes('comissão'));
+  else if(TF==='frete')rows=rows.filter(r=>r.tipo.toLowerCase().includes('ship')||r.detalhe.toLowerCase().includes('frete'));
+  else if(TF==='ads')rows=rows.filter(r=>r.tipo.toLowerCase().includes('ads')||r.detalhe.toLowerCase().includes('ads'));
+  else if(TF==='full')rows=rows.filter(r=>r.tipo.toLowerCase().includes('fulfillment')||r.detalhe.toLowerCase().includes('fulfillment'));
+  else if(TF==='cred')rows=rows.filter(r=>r.valor>0);
+  if(di)rows=rows.filter(r=>r.data_tarifa>=di);
+  if(df)rows=rows.filter(r=>r.data_tarifa<=df);
+  if(q)rows=rows.filter(r=>(r.detalhe||'').toLowerCase().includes(q)||(r.num_venda||'').includes(q)||(r.tipo||'').includes(q));
+  const tot=rows.reduce((s,r)=>+(s+r.valor).toFixed(2),0);
+  document.getElementById('cnt-tar').textContent=rows.length+' | '+f(tot);
+  const PG=200;if(!renderTarifasML._p)renderTarifasML._p=0;
+  const totPgs=Math.ceil(rows.length/PG);if(renderTarifasML._p>=totPgs)renderTarifasML._p=0;
+  const sl=rows.slice(renderTarifasML._p*PG,(renderTarifasML._p+1)*PG);
+  let html=sl.map(t=>'<tr><td style="color:var(--txt3)">'+t.data_tarifa+'</td><td style="font-size:11px">'+t.tipo+'</td><td style="font-size:11px">'+t.subtipo+'</td><td class="mn">'+( t.num_venda?.slice(-8)||'–')+'</td><td class="mn" style="color:var(--bl)">'+( t.num_item||'–')+'</td><td class="r '+(t.valor>0?'pos':'neg')+'" style="font-weight:600">'+f(t.valor)+'</td></tr>').join('');
+  if(totPgs>1)html+='<tr><td colspan="6" style="padding:8px;text-align:center;background:var(--bg2)"><div style="display:flex;align-items:center;justify-content:center;gap:8px;font-size:11px"><button class="btn btn-sm" onclick="renderTarifasML._p=Math.max(0,renderTarifasML._p-1);renderTarifasML()" '+(renderTarifasML._p===0?'disabled':'')+'>‹</button><span style="color:var(--txt3)">Pág '+(renderTarifasML._p+1)+'/'+totPgs+'</span><button class="btn btn-sm" onclick="renderTarifasML._p=Math.min('+(totPgs-1)+',renderTarifasML._p+1);renderTarifasML()" '+(renderTarifasML._p>=totPgs-1?'disabled':'')+'>›</button></div></td></tr>';
+  tb.innerHTML=html||'<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--txt3)">Nenhuma tarifa.</td></tr>';
+}
+
+// ── Tarifas MP ────────────────────────────────────────────────
+function renderTarifasMP(){
+  const d=getD();const el=document.getElementById('mp-body');
+  if(!d?.tarifas_mp||!d.tarifas_mp.length){el.innerHTML='<div class="empty"><div class="empty-icon">🏦</div><div class="empty-title">Sem tarifas MP</div></div>';return;}
+  const tot=d.tarifas_mp.reduce((s,t)=>+(s+t.valor).toFixed(2),0);
+  el.innerHTML='<div class="mets"><div class="mc"><div class="ml">Total Tarifas MP</div><div class="mv neg">'+f(tot)+'</div><div class="ms">'+d.tarifas_mp.length+' lançamentos</div></div></div>'+
+    '<div class="tbl-wrap"><table><thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th><th>Cobrado</th><th class="r">Valor</th></tr></thead><tbody>'+
+    d.tarifas_mp.map(t=>'<tr><td style="color:var(--txt3)">'+t.data+'</td><td style="font-size:11px">'+t.tipo+'</td><td style="font-size:11px">'+t.detalhe.slice(0,40)+'</td><td><span class="badge '+(t.cobrado_op?'bg':'bk')+'">'+(t.cobrado_op?'Sim':'Não')+'</span></td><td class="r neg">'+f(t.valor)+'</td></tr>').join('')+
+    '</tbody></table></div>';
+}
+
+// ── Produtos ──────────────────────────────────────────────────
+function renderProdutos(){
+  const d=getD();const tb=document.getElementById('tbl-prod');
+  const prods=d?.produtos||[];
+  const q=_v('srch-prod').toLowerCase();
+  const fl=q?prods.filter(p=>p.mlb.toLowerCase().includes(q)||p.titulo.toLowerCase().includes(q)):prods;
+  document.getElementById('cnt-prod').textContent=fl.length+' produtos';
+  tb.innerHTML=fl.map(p=>'<tr><td class="mn" style="color:var(--bl)">'+p.mlb+'</td><td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+p.titulo+'">'+p.titulo+'</td><td style="font-size:11px;color:var(--txt3)">'+( p.categoria||'–')+'</td><td class="r"><div style="display:flex;gap:6px;align-items:center;justify-content:flex-end"><input class="inp" type="number" min="0" step="0.01" id="ci-'+p.mlb+'" value="'+(STATE.custos[p.mlb]||'')+'" placeholder="0,00" style="width:100px;font-size:11px;padding:4px 8px;text-align:right"><button class="btn btn-p btn-sm" onclick="saveCusto(\''+p.mlb+'\',document.getElementById(\'ci-'+p.mlb+'\').value)">✓</button></div></td></tr>').join('')||'<tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--txt3)">Nenhum produto sincronizado.</td></tr>';
+}
+
+// ── Divergências ──────────────────────────────────────────────
+function setDivF(v,el){DivF=v;document.querySelectorAll('#panel-divergencias .fp').forEach(x=>x.classList.remove('on'));el.classList.add('on');renderDivergencias();}
+function renderDivergencias(){
+  const d=getD();const el=document.getElementById('div-list');
+  if(!d?.divergencias){el.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">Sem dados</div></div>';return;}
+  let rows=d.divergencias;
+  if(DivF!=='all')rows=rows.filter(r=>r.sev===DivF);
+  document.getElementById('cnt-divp').textContent=rows.length;
+  el.innerHTML=rows.map(dv=>'<div class="div-card '+dv.sev+'"><div class="div-hd"><span class="badge '+(dv.sev==='err'?'br':dv.sev==='warn'?'bo':'bb')+'">'+dv.tipo+'</span><span class="div-title">'+dv.titulo+'</span>'+(dv.valor!=null?'<span class="div-val '+(dv.valor<0?'neg':dv.valor>0?'pos':'')+' ">'+f(dv.valor)+'</span>':'')+'</div><div class="div-body">'+dv.descricao+'</div></div>').join('')||'<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">Sem divergências</div></div>';
+}
+
+// ── Sellers ───────────────────────────────────────────────────
+function renderSellers(){
+  const el=document.getElementById('sellers-list');if(!el)return;
+  const sellers=Object.values(STATE.sellers);
+  document.getElementById('nb-acc').textContent=sellers.length;
+  el.innerHTML=sellers.length?sellers.map(s=>{
+    const ok=s.expires_at&&Date.now()<s.expires_at;
+    return'<div class="acc-card"><div class="acc-av">'+(s.nick||'?').charAt(0).toUpperCase()+'</div>'+
+      '<div class="acc-info"><div class="acc-nick">'+s.nick+'</div><div class="acc-id">ID: '+s.user_id+'</div>'+
+      '<div style="font-size:10px;color:'+(ok?'var(--gn)':'var(--or)')+'">'+( ok?'Token válido':'Token expirado')+'</div></div>'+
+      '<div style="display:flex;flex-direction:column;gap:4px">'+
+        '<button class="btn btn-p btn-sm" onclick="STATE.activeSeller=\''+s.id+'\';renderSidebar();renderSellers();toast(\'Seller: '+s.nick+'\')">Usar</button>'+
+        '<button class="btn btn-sm" onclick="refreshToken(\''+s.id+'\').then(ok=>toast(ok?\'Token renovado!\':\'Falha.\',ok?\'ok\':\'err\'))">Renovar</button>'+
+        '<button class="btn btn-d btn-sm" onclick="removeSeller(\''+s.id+'\')">Remover</button>'+
+      '</div></div>';
+  }).join(''):'<div class="empty"><div class="empty-icon">👤</div><div class="empty-title">Nenhum seller</div><div class="empty-sub">Clique em <b>+ Adicionar Seller</b></div></div>';
+}
+function renderSidebar(){
+  const el=document.getElementById('sidebar-accs');if(!el)return;
+  el.innerHTML=Object.values(STATE.sellers).map(s=>'<div class="sacc'+(STATE.activeSeller===s.id?' on':'')+'" onclick="STATE.activeSeller=\''+s.id+'\';renderSidebar();renderAll();toast(\'Seller: '+s.nick+'\')"><div class="sacc-av" style="background:var(--blb);color:var(--bl)">'+(s.nick||'?').charAt(0).toUpperCase()+'</div><div style="overflow:hidden"><div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+s.nick+'</div><div style="font-size:10px;color:var(--txt3)">'+s.user_id+'</div></div></div>').join('')||'<div style="font-size:11px;color:var(--txt3);text-align:center;padding:4px">Nenhum seller</div>';
+}
+
+// ── Export XLSX ───────────────────────────────────────────────
+async function exportRelatorio(){
+  const d=getD();if(!d){toast('Sem dados para exportar.','warn');return;}
+  toast('Gerando XLSX...','warn');
+  try{
+    const wb=XLSX.utils.book_new();const s=d.stats;
+    // Resumo
+    const resumo=[['ConciliaML v6 — Relatório Completo'],['Período',fPeriod(STATE.activePeriod)],['Seller',STATE.sellers[STATE.activeSeller]?.nick||'–'],['Gerado',new Date().toLocaleString('pt-BR')],[],
+      ['FINANCEIRO'],['Receita bruta',s.receita],['Comissões ML',s.tComissao],['Frete vendedor',s.tFrete],['Publicidade',s.tPub],['Tarifas MP',s.tMP],['Total tarifas ML',s.tML],['Chargebacks',-(s.tChargeback||0)],['Estornos',s.tEstorno||0],['Líquido s/ CMV',s.liquidoSemCMV],['CMV',s.custos||0],['Lucro estimado',s.lucro||0],[],
+      ['OPERACIONAL'],['Pedidos',s.numPedidos],['Pagamentos',s.numPagamentos],['Envios',s.numEnvios],['Mediações',s.numClaims],['Reembolsos',s.numReembolsos],['Chargebacks',s.numChargebacks],['Divergências',s.numDiv],[],
+      ['SALDO MP'],['Disponível',s.saldo_disponivel||'–'],['Pendente',s.saldo_pendente||'–'],['Bloqueado',s.saldo_bloqueado||'–']];
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(resumo),'Resumo');
+    // Pedidos
+    const ph=['Order ID','Pack ID','Data','Comprador','Produto','MLB','Qtd','Receita','Comissão','Frete','Tarifas','Líquido','CMV','Lucro','Pagto Status','Envio ID','Claim ID','Status'];
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([ph,...(d.pedidos||[]).map(p=>[p.order_id,p.pack_id,p.data_venda,p.buyer_nick,p.titulo,p.mlb,p.qtd,p.receita,p.comissao,p.frete_vendedor,p.total_tarifas,p.liquido,p.cmv??'',p.lucro??'',p.pay_status,p.shipping_id,p.claim_id,p.corr])]),'Pedidos');
+    // Conciliação
+    const ch=['Order ID','Produto','Receita','Taxa Esp.','Taxa Cob.','Dif.Taxa','Líq.Esp.','Líq.Real','Dif.Líq.','Status'];
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([ch,...(d.pedidos||[]).map(p=>[p.order_id,p.titulo,p.receita,p.tarifaEsp,p.cobradoML??'',p.difTaxa??'',p.liquidoEsp,p.liquidoReal??'',p.difLiquido??'',p.concStatus])]),'Conciliação');
+    // Pagamentos
+    const payh=['Payment ID','Order ID','Data','Status','Método','Total','Taxa MP','Líquido','Liberação'];
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([payh,...(d.payments||[]).map(p=>[p.id,p.order_id,(p.date_created||'').slice(0,10),p.status,p.payment_method_id,p.transaction_amount,p.marketplace_fee,p.net_received_amount,(p.money_release_date||'').slice(0,10)])]),'Pagamentos');
+    // Ledger
+    const lh=['Data','Tipo','Descrição','Order ID','Movimento ID','Valor','Saldo Acum.'];
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([lh,...(d.ledger||[]).map(l=>[l.data,l.tipo,l.desc,l.order_id||'',l.movement_id||'',l.valor,l.saldo_acum])]),'Ledger');
+    // Divergências
+    const dh=['Tipo','Severidade','Título','Descrição','Valor'];
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([dh,...(d.divergencias||[]).map(dv=>[dv.tipo,dv.sev,dv.titulo,dv.descricao,dv.valor??''])]),'Divergências');
+    // Chargebacks
+    if(d.chargebacks?.length){const cbh=['Payment ID','Order ID','Data','Status','Valor','Recuperado'];XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([cbh,...d.chargebacks.map(c=>[c.payment_id,c.order_id,c.data,c.status,c.valor,c.recuperado?'Sim':'Não'])]),'Chargebacks');}
+    const fname='ConciliaML_'+STATE.activePeriod+'_'+(STATE.sellers[STATE.activeSeller]?.nick||'seller').replace(/\s/g,'_')+'.xlsx';
+    XLSX.writeFile(wb,fname);toast('Exportado: '+fname);
+  }catch(e){toast('Erro: '+e.message,'err');}
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  LOG DE SINCRONIZAÇÃO
+// ═══════════════════════════════════════════════════════════════
+function log(cls,msg){
+  console.log('[CML]',msg);
+  const lb=document.getElementById('sync-log');
+  if(lb){const el=document.createElement('div');el.className=cls;el.textContent=(cls==='ok'?'✓ ':cls==='er'?'✕ ':cls==='wa'?'⚠ ':'› ')+msg;lb.appendChild(el);lb.scrollTop=lb.scrollHeight;}
+}
+function openSyncLog(){
+  const modal=document.getElementById('modal');
+  modal.innerHTML='<div class="mh"><div class="mht">Log de Sincronização</div><button class="btn btn-sm" onclick="closeModal()">✕</button></div>'+
+    '<div class="log-box" id="sync-log" style="max-height:360px"></div>'+
+    '<div style="margin-top:10px;display:flex;gap:8px">'+
+      '<button class="btn btn-p btn-sm" onclick="startSync()">▶ Sincronizar</button>'+
+      '<button class="btn btn-sm" onclick="var l=document.getElementById(\'sync-log\');if(l)l.innerHTML=\'\'">Limpar</button>'+
+      '<button class="btn btn-sm" onclick="closeModal()">Fechar</button>'+
+    '</div>';
+  openModal();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  NAVEGAÇÃO
+// ═══════════════════════════════════════════════════════════════
+function go(id,el){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('on'));
+  const panel=document.getElementById('panel-'+id);if(panel)panel.classList.add('on');
+  const navEl=el||document.querySelector('.ni[data-p="'+id+'"]');if(navEl)navEl.classList.add('on');
+  const renders={
+    'dashboard':renderDashboard,'ledger':renderLedger,'saldo-mp':renderSaldoMP,
+    'pedidos':renderPedidos,'pagamentos':renderPagamentos,'conciliacao':renderConciliacao,
+    'envios':renderEnvios,'mediacoes':renderMediacoes,'reembolsos':renderReembolsos,
+    'chargebacks':renderChargebacks,'tarifas-ml':renderTarifasML,'tarifas-mp':renderTarifasMP,
+    'produtos':renderProdutos,'divergencias':renderDivergencias,
+    'sellers':renderSellers,'config':()=>{loadMLConfig();loadAIKeyField();},
+  };
+  if(renders[id])renders[id]();
+}
+function qni(id){return document.querySelector('.ni[data-p="'+id+'"]')||null;}
+
+// ═══════════════════════════════════════════════════════════════
+//  UTILITIES
+// ═══════════════════════════════════════════════════════════════
+const f=v=>{if(v==null||v==='–')return'–';const n=Number(v);if(isNaN(n))return'–';return n.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});};
+const toF=v=>{if(v==null)return 0;const n=Number(v);return isNaN(n)?0:n;};
+const _v=id=>document.getElementById(id)?.value?.trim()||'';
+function lsGet(k,d){try{return JSON.parse(localStorage.getItem('cml6_'+k))??d;}catch{return d;}}
+function lsSet(k,v){try{localStorage.setItem('cml6_'+k,JSON.stringify(v));}catch{}}
+function lsDel(k){localStorage.removeItem('cml6_'+k);}
+function setSS(t,l){const d=document.getElementById('sync-dot'),e=document.getElementById('sync-lbl');if(d)d.className='sync-dot'+(t==='ing'?' s-ing':t==='ok'?' s-ok':t==='err'?' s-err':'');if(e)e.textContent=l;}
+function toast(msg,type='ok'){const a=document.getElementById('toast-area');const el=document.createElement('div');el.className='toast '+type;el.innerHTML='<span>'+(type==='ok'?'✓':type==='err'?'✕':'⚠')+'</span><span>'+msg+'</span>';a.appendChild(el);setTimeout(()=>el.remove(),4000);}
+function openModal(){document.getElementById('ov').classList.add('on');}
+function closeModal(){document.getElementById('ov').classList.remove('on');}
+document.getElementById('ov')?.addEventListener('click',e=>{if(e.target===document.getElementById('ov'))closeModal();});
+function secTitle(t){return'<div class="sec-title" style="margin-top:10px">'+t+'</div>';}
+function dr(k,v){return'<div class="dr"><div class="dk">'+k+'</div><div class="dv dvn">'+v+'</div></div>';}
+
+window.addEventListener('load',bootApp);
+</script>
+</body>
+</html>
