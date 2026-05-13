@@ -692,11 +692,19 @@ async function testProxy(){
   if(!proxy){toast('Cole a URL do proxy primeiro.','warn');return;}
   toast('Testando proxy...','warn');
   try{
-    const url=proxy.replace(/\/$/,'')+'/proxy/sites/MLB';
+    // /currencies/BRL é público, não requer token
+    const url=proxy.replace(/\/$/,'')+'/proxy/currencies/BRL';
     const r=await fetch(url);
-    if(r.ok){const d=await r.json();toast('Proxy OK! Site: '+(d.id||d.name||'MLB'),'ok');}
-    else toast('Proxy respondeu HTTP '+r.status,'err');
-  }catch(e){toast('Proxy falhou: '+e.message,'err');}
+    if(r.ok){
+      const d=await r.json();
+      toast('✅ Proxy funcionando! Moeda: '+(d.id||'BRL'),'ok');
+    } else {
+      const txt=await r.text().catch(()=>'');
+      toast('Proxy retornou HTTP '+r.status+' — '+txt.slice(0,60),'err');
+    }
+  }catch(e){
+    toast('Proxy falhou: '+e.message,'err');
+  }
 }
 function getAIKey(){return lsGet('ai_key',null);}
 function saveAIKey(){const k=_v('cfg-aikey');if(!k.startsWith('sk-ant-')){toast('Chave inválida','err');return;}lsSet('ai_key',k);toast('Chave IA salva!');}
