@@ -434,8 +434,14 @@ code{font-family:var(--mono);font-size:11px;background:var(--bg3);padding:2px 6p
             <div style="font-size:13px;font-weight:700;margin-bottom:12px">🔑 App Mercado Livre</div>
             <div class="field"><label>App ID (Client ID)</label><input class="inp" id="cfg-appid" placeholder="1234567890123456"></div>
             <div class="field"><label>Client Secret</label><input class="inp" id="cfg-secret" type="password" placeholder="••••••••"></div>
-            <div class="field"><label>Redirect URI</label><input class="inp" id="cfg-redirect" placeholder="https://..."></div>
+            <div class="field"><label>Redirect URI</label><input class="inp" id="cfg-redirect" placeholder="https://royal-ff.github.io/concilia-ml"></div>
+            <div class="field">
+              <label>URL do Proxy <span style="color:var(--gn);font-size:10px;text-transform:none;letter-spacing:0">— resolve CORS da API ML</span></label>
+              <input class="inp" id="cfg-proxy" placeholder="https://SEU-WORKER.workers.dev" style="font-family:var(--mono);font-size:12px">
+              <div style="font-size:10px;color:var(--txt3);margin-top:4px">Necessário para funcionar no browser. <a href="https://workers.cloudflare.com" target="_blank" style="color:var(--bl)">Criar Worker gratuito →</a></div>
+            </div>
             <button class="btn btn-p btn-sm" onclick="saveMLConfig()">Salvar</button>
+            <button class="btn btn-sm btn-b" style="margin-left:6px" onclick="testProxy()">Testar proxy</button>
           </div>
           <div style="background:var(--bg2);border:1px solid var(--brd);border-radius:var(--r2);padding:16px">
             <div style="font-size:13px;font-weight:700;margin-bottom:12px">🤖 IA (Anthropic)</div>
@@ -466,7 +472,34 @@ code{font-family:var(--mono);font-size:11px;background:var(--bg3);padding:2px 6p
 
 // ── Globals ──────────────────────────────────────────────────
 let fbApp=null,fbDB=null,_fbMod=null,SESSION=null;
-const ML_PROXY_URL=null; // Cloud Function para /oauth/token (CORS)
+// ── Proxy para resolver CORS ──────────────────────────────────
+// Quando o app roda no browser, a ML API bloqueia CORS.
+// O proxy Cloudflare Worker repassa as requisições sem CORS.
+// Configure em: Configurações → Proxy URL
+// Deixe vazio para tentar direto (funciona em alguns ambientes)
+const getProxyURL = () => lsGet('proxy_url', null);
+const ML_BASE = () => {
+  const p = getProxyURL();
+  return p ? p.replace(/\/$/, '') + '/proxy' : 'https://api.mercadolibre.com';
+};
+
+async function mlAPI(path, token, params = {}) {
+  const base = ML_BASE();
+  const url = new URL(base + path);
+  Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+  const r = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
+  if (!r.ok) {
+    const e = await r.json().catch(() => ({ message: r.statusText }));
+    throw new Error('ML ' + r.status + ': ' + (e.message || JSON.stringify(e)));
+  }
+  return r.json();
+}
+
+// OAuth token exchange também passa pelo proxy
+const ML_OAUTH = () => {
+  const p = getProxyURL();
+  return p ? p.replace(/\/$/, '') + '/proxy/oauth/token' : 'https://api.mercadolibre.com/oauth/token';
+};
 
 // ── State completo ────────────────────────────────────────────
 const STATE={
@@ -639,9 +672,32 @@ async function showApp(){
 // ═══════════════════════════════════════════════════════════════
 //  ML CONFIG
 // ═══════════════════════════════════════════════════════════════
-const getMLCfg=()=>lsGet('ml_app',{appId:'',secret:'',redirectUri:''});
-function saveMLConfig(){lsSet('ml_app',{appId:_v('cfg-appid'),secret:_v('cfg-secret'),redirectUri:_v('cfg-redirect')});toast('Credenciais ML salvas!');}
-function loadMLConfig(){const c=getMLCfg();['appid','secret','redirect'].forEach((k,i)=>{const el=document.getElementById('cfg-'+k);if(el)el.value=[c.appId,c.secret,c.redirectUri][i]||'';});}
+const getMLCfg=()=>lsGet('ml_app',{appId:'',secret:'',redirectUri:'',proxyUrl:''});
+function saveMLConfig(){
+  const cfg={appId:_v('cfg-appid'),secret:_v('cfg-secret'),redirectUri:_v('cfg-redirect'),proxyUrl:_v('cfg-proxy')};
+  lsSet('ml_app',cfg);
+  if(cfg.proxyUrl)lsSet('proxy_url',cfg.proxyUrl);
+  else lsDel('proxy_url');
+  toast('Configurações ML salvas!');
+}
+function loadMLConfig(){
+  const c=getMLCfg();
+  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v||'';};
+  set('cfg-appid',c.appId);set('cfg-secret',c.secret);
+  set('cfg-redirect',c.redirectUri||'https://royal-ff.github.io/concilia-ml');
+  set('cfg-proxy',c.proxyUrl||lsGet('proxy_url','')||'');
+}
+async function testProxy(){
+  const proxy=_v('cfg-proxy');
+  if(!proxy){toast('Cole a URL do proxy primeiro.','warn');return;}
+  toast('Testando proxy...','warn');
+  try{
+    const url=proxy.replace(/\/$/,'')+'/proxy/sites/MLB';
+    const r=await fetch(url);
+    if(r.ok){const d=await r.json();toast('Proxy OK! Site: '+(d.id||d.name||'MLB'),'ok');}
+    else toast('Proxy respondeu HTTP '+r.status,'err');
+  }catch(e){toast('Proxy falhou: '+e.message,'err');}
+}
 function getAIKey(){return lsGet('ai_key',null);}
 function saveAIKey(){const k=_v('cfg-aikey');if(!k.startsWith('sk-ant-')){toast('Chave inválida','err');return;}lsSet('ai_key',k);toast('Chave IA salva!');}
 function clearAIKey(){lsDel('ai_key');toast('Chave removida','warn');}
@@ -705,7 +761,7 @@ async function exchangeCode(){
   if(!appId||!secret){err.textContent='Configure App ID e Secret em Configurações.';err.style.display='block';return;}
   const btn=event.target;btn.disabled=true;btn.textContent='Conectando...';
   try{
-    const url=ML_PROXY_URL||'https://api.mercadolibre.com/oauth/token';
+    const url=ML_OAUTH();
     let resp;
     try{resp=await fetch(url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({grant_type:'authorization_code',client_id:appId,client_secret:secret,code,redirect_uri:redirectUri})});}
     catch(corsErr){showTokenFallback();return;}
@@ -749,7 +805,7 @@ async function refreshToken(sid){
   const s=STATE.sellers[sid];if(!s?.refresh_token)return false;
   const{appId,secret}=getMLCfg();
   try{
-    const r=await fetch('https://api.mercadolibre.com/oauth/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({grant_type:'refresh_token',client_id:appId,client_secret:secret,refresh_token:s.refresh_token})});
+    const r=await fetch(ML_OAUTH(),{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({grant_type:'refresh_token',client_id:appId,client_secret:secret,refresh_token:s.refresh_token})});
     if(!r.ok)return false;
     const tk=await r.json();
     await saveSeller(sid,{access_token:tk.access_token,refresh_token:tk.refresh_token||s.refresh_token,expires_at:Date.now()+(tk.expires_in||21600)*1000});
