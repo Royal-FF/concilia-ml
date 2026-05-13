@@ -867,13 +867,15 @@ const delay=ms=>new Promise(r=>setTimeout(r,ms));
 // ═══════════════════════════════════════════════════════════════
 async function loadPeriods(){
   if(!STATE.activeSeller)return;
-  const token=await getToken(STATE.activeSeller);if(!token)return;
+  const token=await getToken(STATE.activeSeller);
+  if(!token){toast('Token inválido. Reconecte o seller.','err');return;}
   setSS('ing','Carregando períodos...');
   try{
     const data=await mlAPI('/billing/integration/monthly/periods',token,{group:'ML',limit:12});
     const raw=Array.isArray(data)?data:(data.periods||data.results||[]);
     let periods=raw.map(p=>typeof p==='string'?p:(p.key||p.date_from||'')).filter(p=>p.match(/^\d{4}-\d{2}/));
     if(!periods.length){
+      log('wa','API não retornou períodos — gerando os últimos 6 meses automaticamente');
       const now=new Date();
       for(let i=0;i<6;i++){const d=new Date(now.getFullYear(),now.getMonth()-i,1);periods.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-01');}
     }
@@ -881,7 +883,22 @@ async function loadPeriods(){
     if(!STATE.activePeriod&&STATE.periods.length)STATE.activePeriod=STATE.periods[0];
     renderPeriodPills();
     setSS('ok','Períodos OK ('+STATE.periods.length+')');
-  }catch(e){setSS('err','Erro');log('er','Períodos: '+e.message);}
+    log('ok','Períodos: '+STATE.periods.slice(0,3).join(', ')+(STATE.periods.length>3?'...':''));
+  }catch(e){
+    const err=classificarErro(e);
+    setSS('err','Falhou');
+    log('er','Períodos: '+err.raw);
+    // Gerar períodos localmente mesmo com erro para não travar o sistema
+    if(!STATE.periods.length){
+      const now=new Date();
+      for(let i=0;i<6;i++){const d=new Date(now.getFullYear(),now.getMonth()-i,1);STATE.periods.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-01');}
+      STATE.activePeriod=STATE.periods[0];
+      renderPeriodPills();
+      log('wa','Períodos gerados localmente — configure o proxy para buscar da API');
+    }
+    toast(err.msg,'err');
+    if(err.acao)setTimeout(()=>toast('💡 '+err.acao,'warn'),800);
+  }
 }
 function renderPeriodPills(){
   const el=document.getElementById('period-pills');if(!el)return;
@@ -907,72 +924,282 @@ function fPeriod(k){if(!k)return'–';const d=new Date(k+'T12:00:00Z');return d.
 //  SYNC COMPLETO — todas as APIs
 // ═══════════════════════════════════════════════════════════════
 let _syncing=false;
+// ═══════════════════════════════════════════════════════════════
+//  SISTEMA DE ERROS — classificação, retry e mensagens claras
+// ═══════════════════════════════════════════════════════════════
+const ERROS = {
+  // Proxy / Rede
+  'Failed to fetch':         { msg: 'Sem conexão com o proxy. Verifique se o Worker está ativo em Configurações → Testar proxy.', tipo: 'proxy', acao: 'Vá em Configurações → URL do Proxy e clique em Testar proxy.' },
+  'NetworkError':            { msg: 'Erro de rede. Verifique sua conexão com a internet.', tipo: 'rede' },
+  'CORS':                    { msg: 'Bloqueio CORS. O proxy não está configurado. Vá em Configurações → URL do Proxy.', tipo: 'proxy' },
+  // ML API
+  'ML 400':                  { msg: 'Requisição inválida para a API do ML (400). Verifique os parâmetros.', tipo: 'api' },
+  'ML 401':                  { msg: 'Token expirado ou inválido (401). Tente reconectar o seller.', tipo: 'auth', acao: 'Vá em Sellers → Renovar token.' },
+  'ML 403':                  { msg: 'Sem permissão (403). O app pode não ter os escopos necessários (billing, orders, payments).', tipo: 'auth', acao: 'Verifique os escopos no ML Developer Center.' },
+  'ML 404':                  { msg: 'Endpoint não encontrado (404). Este recurso pode não existir neste período.', tipo: 'api' },
+  'ML 429':                  { msg: 'Rate limit atingido (429). Muitas requisições. Aguarde 1 minuto e tente novamente.', tipo: 'rate', acao: 'Aguarde 60 segundos antes de sincronizar novamente.' },
+  'ML 500':                  { msg: 'Erro interno da API do ML (500). Tente novamente em alguns minutos.', tipo: 'api' },
+  'ML 503':                  { msg: 'API do ML temporariamente indisponível (503). Tente novamente em alguns minutos.', tipo: 'api' },
+  // Firebase
+  'permission-denied':       { msg: 'Sem permissão no Firestore (permission-denied). Publique as regras abertas no Firebase Console.', tipo: 'firebase', acao: 'Firestore → Regras → allow read, write: if true → Publicar.' },
+  'unavailable':             { msg: 'Firestore indisponível. Os dados serão salvos localmente até a conexão ser restaurada.', tipo: 'firebase' },
+  'quota-exceeded':          { msg: 'Cota do Firestore excedida. Aguarde o reset diário ou faça upgrade do plano.', tipo: 'firebase' },
+  // Token
+  'Token inválido':          { msg: 'Access token inválido ou expirado. Reconecte o seller.', tipo: 'auth', acao: 'Vá em Sellers → Renovar token.' },
+  'Token expirado':          { msg: 'Token expirado. Reconecte o seller para obter um novo token.', tipo: 'auth', acao: 'Vá em Sellers → Renovar token.' },
+  // Período
+  'Sem período':             { msg: 'Nenhum período disponível. Verifique se o seller tem dados de faturamento no ML.', tipo: 'dados' },
+};
+
+function classificarErro(e) {
+  const msg = e?.message || String(e);
+  for (const [key, info] of Object.entries(ERROS)) {
+    if (msg.includes(key)) return { ...info, raw: msg };
+  }
+  return { msg: msg, tipo: 'desconhecido', raw: msg };
+}
+
+function erroToast(e, contexto = '') {
+  const err = classificarErro(e);
+  const label = contexto ? '['+contexto+'] ' : '';
+  toast(label + err.msg, 'err');
+  if (err.acao) {
+    setTimeout(() => toast('💡 ' + err.acao, 'warn'), 800);
+  }
+  log('er', label + err.raw);
+  return err;
+}
+
+// Retry com backoff exponencial para erros de rate limit e rede
+async function fetchComRetry(fn, maxTentativas = 3, contexto = '') {
+  let ultimoErro;
+  for (let i = 0; i < maxTentativas; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      ultimoErro = e;
+      const err = classificarErro(e);
+      // Não retentar erros de auth ou permissão
+      if (err.tipo === 'auth' || err.tipo === 'proxy') throw e;
+      if (err.tipo === 'rate') {
+        const espera = Math.pow(2, i+1) * 5000; // 10s, 20s, 40s
+        log('wa', contexto+' — Rate limit. Aguardando '+espera/1000+'s...');
+        await delay(espera);
+      } else if (i < maxTentativas - 1) {
+        log('wa', contexto+' — Tentativa '+(i+1)+'/'+maxTentativas+' falhou. Repetindo...');
+        await delay(1500 * (i + 1));
+      }
+    }
+  }
+  throw ultimoErro;
+}
+
+// ── Proxy test melhorado ──────────────────────────────────────
+async function testProxy() {
+  const proxy = _v('cfg-proxy');
+  if (!proxy) { toast('Cole a URL do proxy primeiro.', 'warn'); return; }
+
+  const btn = document.querySelector('[onclick="testProxy()"]');
+  if (btn) { btn.disabled = true; btn.textContent = 'Testando...'; }
+
+  try {
+    // Teste 1: Worker responde?
+    const url = proxy.replace(/\/$/, '') + '/proxy/currencies/BRL';
+    log('in', 'Testando proxy: ' + url);
+    let r;
+    try {
+      r = await fetch(url);
+    } catch (e) {
+      throw new Error('Failed to fetch — Worker não alcançável. Verifique se a URL está correta e o Worker está ativo.');
+    }
+
+    if (r.status === 403) {
+      const body = await r.json().catch(() => ({}));
+      if (body.error?.includes('Origin not allowed')) {
+        throw new Error('CORS — Worker bloqueou a origem. Verifique se o código do Worker foi atualizado.');
+      }
+      throw new Error('ML 403 — A API do ML retornou 403. O endpoint /currencies/BRL é público, isso indica problema no proxy.');
+    }
+
+    if (!r.ok) throw new Error('Proxy retornou HTTP ' + r.status);
+
+    const d = await r.json();
+    log('ok', 'Proxy OK — moeda: ' + (d.id || 'BRL') + ', símbolo: ' + (d.symbol || 'R$'));
+    toast('✅ Proxy funcionando! API do ML acessível.', 'ok');
+
+    // Teste 2: CORS headers presentes?
+    const corsHeader = r.headers.get('access-control-allow-origin');
+    if (!corsHeader) {
+      toast('⚠ Proxy responde mas sem header CORS. Alguns navegadores podem bloquear.', 'warn');
+    }
+
+  } catch (e) {
+    erroToast(e, 'Proxy');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Testar proxy'; }
+  }
+}
+
 const _syncLog=[];
 async function startSync(){
   if(_syncing){toast('Sincronização em andamento.','warn');return;}
   if(!STATE.activeSeller){toast('Adicione um seller primeiro.','warn');go('sellers',qni('sellers'));return;}
-  if(!STATE.activePeriod){await loadPeriods();if(!STATE.activePeriod){toast('Sem período disponível.','err');return;}}
+
+  // Verificar proxy configurado
+  if(!getProxyURL()){
+    toast('⚠ Proxy não configurado — requisições podem falhar por CORS.','warn');
+    setTimeout(()=>toast('💡 Configure em: Configurações → URL do Proxy','warn'),800);
+  }
+
+  if(!STATE.activePeriod){
+    await loadPeriods();
+    if(!STATE.activePeriod){toast('Sem período disponível. Verifique a conexão e o seller.','err');return;}
+  }
+
   _syncing=true;_syncLog.length=0;
   document.getElementById('btn-sync').disabled=true;
   setSS('ing','Sincronizando...');
+  openSyncLog(); // Abrir log automaticamente
+
   const sid=STATE.activeSeller,period=STATE.activePeriod;
+  const errosParciais=[];
+
   try{
     const token=await getToken(sid);
-    if(!token)throw new Error('Token inválido — reconecte o seller.');
+    if(!token) throw new Error('Token inválido — reconecte o seller em Sellers → Renovar token.');
+
     const uid=STATE.sellers[sid]?.user_id||sid;
+    log('in','Seller: '+(STATE.sellers[sid]?.nick||sid)+' | Período: '+fPeriod(period));
 
-    // ── 1. Tarifas ML (Billing API) ───────────────────────────
-    log('in','[1/8] Tarifas ML (Billing)...');
-    const tarifasML=await fetchBilling(token,period,'ML');
-    log('ok','Tarifas ML: '+tarifasML.length);
+    // ── 1. Tarifas ML ─────────────────────────────────────────
+    log('in','[1/8] Tarifas ML (Billing API)...');
+    let tarifasML=[];
+    try{
+      tarifasML=await fetchComRetry(()=>fetchBilling(token,period,'ML'),'Tarifas ML');
+      log('ok','✓ Tarifas ML: '+tarifasML.length+' registros');
+    }catch(e){
+      const err=classificarErro(e);
+      errosParciais.push({etapa:'Tarifas ML',erro:err.msg});
+      log('wa','⚠ Tarifas ML puladas: '+err.msg);
+    }
 
-    // ── 2. Tarifas MP (Billing API) ───────────────────────────
-    log('in','[2/8] Tarifas MP (Billing)...');
-    const tarifasMP=await fetchBilling(token,period,'MP');
-    log('ok','Tarifas MP: '+tarifasMP.length);
+    // ── 2. Tarifas MP ─────────────────────────────────────────
+    log('in','[2/8] Tarifas MP (Billing API)...');
+    let tarifasMP=[];
+    try{
+      tarifasMP=await fetchComRetry(()=>fetchBilling(token,period,'MP'),'Tarifas MP');
+      log('ok','✓ Tarifas MP: '+tarifasMP.length+' registros');
+    }catch(e){
+      const err=classificarErro(e);
+      errosParciais.push({etapa:'Tarifas MP',erro:err.msg});
+      log('wa','⚠ Tarifas MP puladas: '+err.msg);
+    }
 
-    // ── 3. Pedidos (Orders API) ───────────────────────────────
+    // ── 3. Pedidos ────────────────────────────────────────────
     log('in','[3/8] Pedidos (Orders API)...');
-    const orders=await fetchOrders(token,uid,period);
-    log('ok','Pedidos: '+orders.length);
+    let orders=[];
+    try{
+      orders=await fetchComRetry(()=>fetchOrders(token,uid,period),'Pedidos');
+      log('ok','✓ Pedidos: '+orders.length);
+      if(orders.length===0) log('wa','Nenhum pedido encontrado. Verifique o período e o seller_id.');
+    }catch(e){
+      const err=classificarErro(e);
+      errosParciais.push({etapa:'Pedidos',erro:err.msg});
+      log('er','✕ Pedidos: '+err.msg);
+      if(err.tipo==='auth'||err.tipo==='proxy') throw e; // Erro crítico — parar
+    }
 
-    // ── 4. Pagamentos detalhados (Payments API) ───────────────
-    log('in','[4/8] Pagamentos (Payments API)...');
-    const payments=await fetchPayments(token,orders);
-    log('ok','Pagamentos: '+payments.length);
+    // ── 4. Pagamentos ─────────────────────────────────────────
+    log('in','[4/8] Pagamentos ('+orders.length+' pedidos)...');
+    let payments=[];
+    try{
+      payments=await fetchPayments(token,orders);
+      log('ok','✓ Pagamentos: '+payments.length);
+    }catch(e){
+      const err=classificarErro(e);
+      errosParciais.push({etapa:'Pagamentos',erro:err.msg});
+      log('wa','⚠ Pagamentos parciais: '+err.msg);
+    }
 
-    // ── 5. Envios (Shipments API) ─────────────────────────────
+    // ── 5. Envios ─────────────────────────────────────────────
     log('in','[5/8] Envios (Shipments API)...');
-    const shipments=await fetchShipments(token,orders);
-    log('ok','Envios: '+shipments.length);
+    let shipments=[];
+    try{
+      shipments=await fetchShipments(token,orders);
+      log('ok','✓ Envios: '+shipments.length);
+    }catch(e){
+      const err=classificarErro(e);
+      errosParciais.push({etapa:'Envios',erro:err.msg});
+      log('wa','⚠ Envios pulados: '+err.msg);
+    }
 
-    // ── 6. Mediações / Claims ─────────────────────────────────
+    // ── 6. Mediações ──────────────────────────────────────────
     log('in','[6/8] Mediações (Claims API)...');
-    const claims=await fetchClaims(token,uid,period);
-    log('ok','Mediações: '+claims.length);
+    let claims=[];
+    try{
+      claims=await fetchClaims(token,uid,period);
+      log('ok','✓ Mediações: '+claims.length);
+    }catch(e){
+      const err=classificarErro(e);
+      errosParciais.push({etapa:'Mediações',erro:err.msg});
+      log('wa','⚠ Mediações puladas: '+err.msg);
+    }
 
-    // ── 7. Saldo Mercado Pago ─────────────────────────────────
-    log('in','[7/8] Saldo e movimentos MP...');
-    const{saldo,movements}=await fetchSaldoMP(token,uid,period);
-    log('ok','Movimentos MP: '+movements.length);
+    // ── 7. Saldo MP ───────────────────────────────────────────
+    log('in','[7/8] Saldo Mercado Pago...');
+    let saldo={available:null,pending:null,blocked:null},movements=[];
+    try{
+      const r=await fetchSaldoMP(token,uid,period);
+      saldo=r.saldo;movements=r.movements;
+      log('ok','✓ Saldo disponível: '+f(saldo.available)+' | Movimentos: '+movements.length);
+    }catch(e){
+      const err=classificarErro(e);
+      errosParciais.push({etapa:'Saldo MP',erro:err.msg});
+      log('wa','⚠ Saldo MP pulado: '+err.msg);
+    }
 
-    // ── 8. Conciliação completa ───────────────────────────────
-    log('in','[8/8] Conciliando tudo...');
+    // ── 8. Conciliação ────────────────────────────────────────
+    log('in','[8/8] Conciliando...');
     const dataset=buildDataset({tarifasML,tarifasMP,orders,payments,shipments,claims,saldo,movements,period,sid});
-    log('ok','Conciliação: '+dataset.stats.numPedidos+' pedidos | '+dataset.divergencias.length+' divergências');
+    log('ok','✓ '+dataset.stats.numPedidos+' pedidos | '+dataset.divergencias.length+' divergências | '+dataset.ledger.length+' entradas no ledger');
+
+    // Avisar sobre erros parciais
+    if(errosParciais.length){
+      log('wa','⚠ Sincronização parcial — '+errosParciais.length+' etapa(s) com erro:');
+      errosParciais.forEach(ep=>log('wa','  • '+ep.etapa+': '+ep.erro));
+    }
 
     STATE.data[period]=dataset;
 
-    // ── Salvar no Firestore ───────────────────────────────────
+    // ── Salvar ────────────────────────────────────────────────
     log('in','Salvando no Firestore...');
-    await saveToFirestore(sid,period,dataset);
-    log('ok','Salvo!');
+    try{
+      await saveToFirestore(sid,period,dataset);
+      log('ok','✓ Salvo no Firestore!');
+    }catch(e){
+      const err=classificarErro(e);
+      log('wa','⚠ Não salvou no Firestore: '+err.msg+'. Dados em memória apenas.');
+      if(err.tipo==='firebase'&&err.msg.includes('Regras')){
+        setTimeout(()=>toast('💡 '+err.msg,'warn'),500);
+      }
+    }
 
     updBadges(dataset);renderAll();
-    setSS('ok','Sincronizado '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}));
-    toast('Sincronização concluída!');
-  }catch(e){log('er','ERRO: '+e.message);setSS('err','Erro');toast(e.message,'err');}
-  finally{_syncing=false;document.getElementById('btn-sync').disabled=false;}
+    const aviso=errosParciais.length?' (parcial — '+errosParciais.length+' erro(s))':'';
+    setSS('ok','Sincronizado '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+aviso);
+    toast(errosParciais.length?'⚠ Sincronização parcial. Veja o log para detalhes.':'✅ Sincronização concluída!', errosParciais.length?'warn':'ok');
+
+  }catch(e){
+    const err=classificarErro(e);
+    log('er','✕ ERRO CRÍTICO: '+err.raw);
+    if(err.acao) log('wa','💡 '+err.acao);
+    setSS('err','Falhou');
+    toast(err.msg,'err');
+    if(err.acao) setTimeout(()=>toast('💡 '+err.acao,'warn'),800);
+  }finally{
+    _syncing=false;
+    document.getElementById('btn-sync').disabled=false;
+  }
 }
 
 // ── Billing API ───────────────────────────────────────────────
