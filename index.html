@@ -984,55 +984,69 @@ async function testProxy() {
   const btn = document.querySelector('[onclick="testProxy()"]');
   if (btn) { btn.disabled = true; btn.textContent = 'Testando...'; }
 
+  log('in', 'Testando proxy: ' + proxy);
+
   try {
     const base = proxy.replace(/\/$/, '');
 
-    // ── Teste 1: proxy está vivo? (OPTIONS — sem chamar ML) ──
-    log('in', 'Teste 1: verificando se o proxy responde...');
-    let alive = false;
+    // ── Etapa 1: proxy está respondendo? ─────────────────────
+    // Qualquer resposta HTTP (mesmo 403/404/500) significa que o proxy está vivo.
+    // Só lança exceção se o proxy for inacessível (rede cortada, URL errada).
+    let proxyVivo = false;
+    let statusRecebido = null;
     try {
-      const r = await fetch(base + '/proxy/sites/MLB', { method: 'OPTIONS' });
-      alive = r.status === 204 || r.status === 200 || r.status === 403;
+      const r = await fetch(base + '/proxy/sites/MLB', {
+        method: 'GET',
+        mode: 'cors',
+      });
+      statusRecebido = r.status;
+      proxyVivo = true; // qualquer HTTP response = proxy funcionando
       const cors = r.headers.get('access-control-allow-origin');
-      if (alive) {
-        log('ok', 'Proxy está no ar! CORS header: ' + (cors || 'ausente'));
-        if (!cors) log('wa', 'Header Access-Control-Allow-Origin ausente — pode causar bloqueio CORS');
+      log('ok', 'Proxy respondeu HTTP ' + r.status + ' | CORS: ' + (cors || 'ausente'));
+      if (!cors) {
+        log('wa', 'Header CORS ausente na resposta — verifique o código do proxy');
       }
-    } catch (e) {
-      throw new Error('Failed to fetch — Proxy não alcançável. URL correta? Deno está ativo?');
+    } catch (fetchErr) {
+      // fetch só lança exceção se o servidor for inacessível
+      log('er', 'Proxy inacessível: ' + fetchErr.message);
+      toast('❌ Proxy não alcançável — verifique se a URL está correta e o Deno está ativo.', 'err');
+      return;
     }
 
-    // ── Teste 2: testar com token real se tiver seller ───────
+    if (!proxyVivo) {
+      toast('❌ Proxy não respondeu.', 'err');
+      return;
+    }
+
+    // ── Etapa 2: testar com token real do seller ──────────────
     const token = STATE.activeSeller ? await getToken(STATE.activeSeller) : null;
     if (token) {
-      log('in', 'Teste 2: chamando ML API com token do seller...');
+      log('in', 'Testando API ML com token do seller...');
       try {
-        const r = await fetch(base + '/proxy/users/me', {
-          headers: { Authorization: 'Bearer ' + token }
+        const r2 = await fetch(base + '/proxy/users/me', {
+          mode: 'cors',
+          headers: { 'Authorization': 'Bearer ' + token },
         });
-        if (r.ok) {
-          const d = await r.json();
-          log('ok', 'ML API OK! Seller: ' + (d.nickname || d.id));
-          toast('✅ Proxy funcionando! Seller: ' + (d.nickname || d.id), 'ok');
-        } else if (r.status === 401) {
-          log('wa', 'Token expirado (401) — proxy funciona mas token precisa ser renovado');
-          toast('⚠ Proxy OK, mas token expirado. Renove em Sellers.', 'warn');
+        if (r2.ok) {
+          const d = await r2.json().catch(() => ({}));
+          log('ok', 'ML API OK! Seller: ' + (d.nickname || d.id || '–'));
+          toast('✅ Tudo funcionando! Proxy + API ML OK. Seller: ' + (d.nickname || d.id), 'ok');
+        } else if (r2.status === 401) {
+          log('wa', 'Token expirado (401)');
+          toast('⚠ Proxy OK ✓ — mas token expirado. Vá em Sellers → Renovar token.', 'warn');
         } else {
-          log('wa', 'ML retornou HTTP ' + r.status + ' — proxy funciona');
-          toast('⚠ Proxy está no ar mas ML retornou ' + r.status, 'warn');
+          log('wa', 'ML retornou HTTP ' + r2.status);
+          toast('⚠ Proxy OK ✓ — ML retornou HTTP ' + r2.status + '. Verifique escopos do app.', 'warn');
         }
       } catch (e) {
-        log('wa', 'Erro chamando ML via proxy: ' + e.message);
-        toast('Proxy está no ar mas erro na ML: ' + e.message, 'warn');
+        log('wa', 'Erro ao chamar ML: ' + e.message);
+        toast('⚠ Proxy OK ✓ — mas erro ao chamar ML: ' + e.message, 'warn');
       }
     } else {
-      // Sem token — só confirmar que proxy está vivo
-      toast('✅ Proxy está no ar! Adicione um seller para testar a API do ML.', 'ok');
-      log('in', 'Sem seller conectado — não foi possível testar a API do ML com token.');
+      // Proxy está vivo, sem seller para testar ML
+      toast('✅ Proxy está no ar (HTTP ' + statusRecebido + ')! Conecte um seller para testar a API do ML.', 'ok');
     }
 
-  } catch (e) {
-    erroToast(e, 'Proxy');
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = 'Testar proxy'; }
   }
