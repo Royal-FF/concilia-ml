@@ -985,34 +985,50 @@ async function testProxy() {
   if (btn) { btn.disabled = true; btn.textContent = 'Testando...'; }
 
   try {
-    // Teste 1: Worker responde?
-    const url = proxy.replace(/\/$/, '') + '/proxy/sites/MLB';
-    log('in', 'Testando proxy: ' + url);
-    let r;
+    const base = proxy.replace(/\/$/, '');
+
+    // ── Teste 1: proxy está vivo? (OPTIONS — sem chamar ML) ──
+    log('in', 'Teste 1: verificando se o proxy responde...');
+    let alive = false;
     try {
-      r = await fetch(url);
-    } catch (e) {
-      throw new Error('Failed to fetch — Worker não alcançável. Verifique se a URL está correta e o Worker está ativo.');
-    }
-
-    if (r.status === 403) {
-      const body = await r.json().catch(() => ({}));
-      if (body.error?.includes('Origin not allowed')) {
-        throw new Error('CORS — Worker bloqueou a origem. Verifique se o código do Worker foi atualizado.');
+      const r = await fetch(base + '/proxy/sites/MLB', { method: 'OPTIONS' });
+      alive = r.status === 204 || r.status === 200 || r.status === 403;
+      const cors = r.headers.get('access-control-allow-origin');
+      if (alive) {
+        log('ok', 'Proxy está no ar! CORS header: ' + (cors || 'ausente'));
+        if (!cors) log('wa', 'Header Access-Control-Allow-Origin ausente — pode causar bloqueio CORS');
       }
-      throw new Error('ML 403 — A API do ML retornou 403 no endpoint de teste. O proxy está funcionando mas a API rejeitou a requisição.');
+    } catch (e) {
+      throw new Error('Failed to fetch — Proxy não alcançável. URL correta? Deno está ativo?');
     }
 
-    if (!r.ok) throw new Error('Proxy retornou HTTP ' + r.status);
-
-    const d = await r.json();
-    log('ok', 'Proxy OK — Site: ' + (d.id || 'MLB') + ', país: ' + (d.default_currency_id || 'BRL'));
-    toast('✅ Proxy funcionando! API do ML acessível.', 'ok');
-
-    // Teste 2: CORS headers presentes?
-    const corsHeader = r.headers.get('access-control-allow-origin');
-    if (!corsHeader) {
-      toast('⚠ Proxy responde mas sem header CORS. Alguns navegadores podem bloquear.', 'warn');
+    // ── Teste 2: testar com token real se tiver seller ───────
+    const token = STATE.activeSeller ? await getToken(STATE.activeSeller) : null;
+    if (token) {
+      log('in', 'Teste 2: chamando ML API com token do seller...');
+      try {
+        const r = await fetch(base + '/proxy/users/me', {
+          headers: { Authorization: 'Bearer ' + token }
+        });
+        if (r.ok) {
+          const d = await r.json();
+          log('ok', 'ML API OK! Seller: ' + (d.nickname || d.id));
+          toast('✅ Proxy funcionando! Seller: ' + (d.nickname || d.id), 'ok');
+        } else if (r.status === 401) {
+          log('wa', 'Token expirado (401) — proxy funciona mas token precisa ser renovado');
+          toast('⚠ Proxy OK, mas token expirado. Renove em Sellers.', 'warn');
+        } else {
+          log('wa', 'ML retornou HTTP ' + r.status + ' — proxy funciona');
+          toast('⚠ Proxy está no ar mas ML retornou ' + r.status, 'warn');
+        }
+      } catch (e) {
+        log('wa', 'Erro chamando ML via proxy: ' + e.message);
+        toast('Proxy está no ar mas erro na ML: ' + e.message, 'warn');
+      }
+    } else {
+      // Sem token — só confirmar que proxy está vivo
+      toast('✅ Proxy está no ar! Adicione um seller para testar a API do ML.', 'ok');
+      log('in', 'Sem seller conectado — não foi possível testar a API do ML com token.');
     }
 
   } catch (e) {
