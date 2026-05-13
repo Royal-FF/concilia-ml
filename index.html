@@ -687,25 +687,7 @@ function loadMLConfig(){
   set('cfg-redirect',c.redirectUri||'https://royal-ff.github.io/concilia-ml');
   set('cfg-proxy',c.proxyUrl||lsGet('proxy_url','')||'');
 }
-async function testProxy(){
-  const proxy=_v('cfg-proxy');
-  if(!proxy){toast('Cole a URL do proxy primeiro.','warn');return;}
-  toast('Testando proxy...','warn');
-  try{
-    // /currencies/BRL é público, não requer token
-    const url=proxy.replace(/\/$/,'')+'/proxy/currencies/BRL';
-    const r=await fetch(url);
-    if(r.ok){
-      const d=await r.json();
-      toast('✅ Proxy funcionando! Moeda: '+(d.id||'BRL'),'ok');
-    } else {
-      const txt=await r.text().catch(()=>'');
-      toast('Proxy retornou HTTP '+r.status+' — '+txt.slice(0,60),'err');
-    }
-  }catch(e){
-    toast('Proxy falhou: '+e.message,'err');
-  }
-}
+// testProxy definida abaixo
 function getAIKey(){return lsGet('ai_key',null);}
 function saveAIKey(){const k=_v('cfg-aikey');if(!k.startsWith('sk-ant-')){toast('Chave inválida','err');return;}lsSet('ai_key',k);toast('Chave IA salva!');}
 function clearAIKey(){lsDel('ai_key');toast('Chave removida','warn');}
@@ -1004,7 +986,7 @@ async function testProxy() {
 
   try {
     // Teste 1: Worker responde?
-    const url = proxy.replace(/\/$/, '') + '/proxy/currencies/BRL';
+    const url = proxy.replace(/\/$/, '') + '/proxy/sites/MLB';
     log('in', 'Testando proxy: ' + url);
     let r;
     try {
@@ -1018,13 +1000,13 @@ async function testProxy() {
       if (body.error?.includes('Origin not allowed')) {
         throw new Error('CORS — Worker bloqueou a origem. Verifique se o código do Worker foi atualizado.');
       }
-      throw new Error('ML 403 — A API do ML retornou 403. O endpoint /currencies/BRL é público, isso indica problema no proxy.');
+      throw new Error('ML 403 — A API do ML retornou 403 no endpoint de teste. O proxy está funcionando mas a API rejeitou a requisição.');
     }
 
     if (!r.ok) throw new Error('Proxy retornou HTTP ' + r.status);
 
     const d = await r.json();
-    log('ok', 'Proxy OK — moeda: ' + (d.id || 'BRL') + ', símbolo: ' + (d.symbol || 'R$'));
+    log('ok', 'Proxy OK — Site: ' + (d.id || 'MLB') + ', país: ' + (d.default_currency_id || 'BRL'));
     toast('✅ Proxy funcionando! API do ML acessível.', 'ok');
 
     // Teste 2: CORS headers presentes?
